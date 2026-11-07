@@ -1,0 +1,35 @@
+/* App styles (moved out of index.html) */
+  body{ -webkit-tap-highlight-color: transparent; font-feature-settings: "cv02","cv03","cv04","cv11"; }
+  .no-scrollbar::-webkit-scrollbar{ display:none; }
+  .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }
+  /* 100dvh tracks the *visible* viewport on mobile (the URL bar no longer hides the bottom nav/ad bar);
+     the 100vh line first is the fallback for older browsers that don't understand dvh. */
+  .app-frame{ height:100vh; height:100dvh; }
+  .app-min-h{ min-height:100vh; min-height:100dvh; }
+  .safe-top{ padding-top: max(env(safe-area-inset-top,0px), 4px); }
+  .safe-bottom{ padding-bottom: max(env(safe-area-inset-bottom,0px), 4px); }
+  .manage-tab{ padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#fff; border:1px solid #E2E8F0; color:#475569; }
+  .manage-tab.active{ background:#0B192C; border-color:#0B192C; color:#fff; }
+  .nav-tab{ color:#94A3B8; }
+
+  /* Full-screen chat: tabs, totals and header extras are hidden so the conversation gets the whole screen. */
+  .chat-full #bottomNav, .chat-full #summarySection, .chat-full #footerNoteRow,
+  .chat-full #hdrSync, .chat-full #hdrActions, .chat-full #hdrPro{ display:none !important; }
+  .chat-full #hdrInner{ padding-top:0; padding-bottom:3px; }
+  .chat-full #hdrLogo{ width:20px; height:20px; border-radius:6px; }
+  .chat-full #hdrLogo svg{ width:13px; height:13px; }
+  .chat-full #hdrLogo > span{ display:none; }
+  .chat-full #appHeader h1{ font-size:13px; }
+  #hdrDot{ display:none; width:6px; height:6px; border-radius:9999px; }
+  .chat-full #hdrDot{ display:inline-block; }
+  .nav-tab.active{ color:#0066FF; }
+
+  /* Printing a bill: render it in-page (no popup window — mobile browsers block those
+     reliably once the open() call happens outside a synchronous click, which is
+     unavoidable in a chat flow). Everything else on the page is hidden while printing. */
+  #printArea{ position:fixed; top:0; left:0; width:0; height:0; overflow:hidden; visibility:hidden; }
+  @media print{
+    body *{ visibility:hidden !important; }
+    #printArea, #printArea *{ visibility:visible !important; }
+    #printArea{ position:static; width:auto; height:auto; overflow:visible; }
+  }

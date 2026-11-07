@@ -1,0 +1,34 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.8.34330.188
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatAccountant.Api", "ChatAccountant.Api\ChatAccountant.Api.csproj", "{3F2A6C1E-8B47-4D59-9A21-5E7C0D1B4A11}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatAccountant.Web", "ChatAccountant.Web\ChatAccountant.Web.csproj", "{7C9E4B22-1D35-4F86-A0B3-6D2E8F5C9A22}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Database", "Database", "{B1D0F5A3-2C4E-4A77-8E19-0F6A3C7D5B33}"
+	ProjectSection(SolutionItems) = preProject
+		Database\schema.sql = Database\schema.sql
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3F2A6C1E-8B47-4D59-9A21-5E7C0D1B4A11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F2A6C1E-8B47-4D59-9A21-5E7C0D1B4A11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F2A6C1E-8B47-4D59-9A21-5E7C0D1B4A11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F2A6C1E-8B47-4D59-9A21-5E7C0D1B4A11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C9E4B22-1D35-4F86-A0B3-6D2E8F5C9A22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C9E4B22-1D35-4F86-A0B3-6D2E8F5C9A22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C9E4B22-1D35-4F86-A0B3-6D2E8F5C9A22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C9E4B22-1D35-4F86-A0B3-6D2E8F5C9A22}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Tailwind sources live here (not published). Run "npm install" + "npm run build:css" in /tailwind after changing classes. -->
+    <Content Remove="tailwind\**" />
+    <None Include="tailwind\**" Exclude="tailwind\node_modules\**" />
+  </ItemGroup>
+
+</Project>

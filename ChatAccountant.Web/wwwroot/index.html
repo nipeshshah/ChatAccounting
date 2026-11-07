@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Chat Accountant</title>
+<meta name="description" content="Smart bookkeeping, made simple - chat-based accounting with GST.">
+<meta name="theme-color" content="#0B192C">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chat Accountant">
+<!-- All styles/fonts/icons are self-hosted so the app shell works offline -->
+<link rel="stylesheet" href="lib/fonts/fonts.css">
+<link rel="stylesheet" href="lib/phosphor/regular.css">
+<link rel="stylesheet" href="lib/phosphor/bold.css">
+<link rel="stylesheet" href="css/tailwind.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body class="font-sans text-slate-800 antialiased selection:bg-fintech-blue selection:text-white flex justify-center app-min-h bg-[#070F1C]">
+
+<div class="app-frame w-full max-w-[430px] flex flex-col shadow-2xl relative bg-slate-50 border-x border-slate-200/80 overflow-hidden">
+
+  <!-- Header -->
+  <header id="appHeader" class="shrink-0 z-40 bg-corporate-navy text-white shadow-lg border-b border-corporate-subtle safe-top">
+    <div id="hdrInner" class="px-3 pt-1 pb-2 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div id="hdrLogo" class="relative w-8 h-8 rounded-lg bg-gradient-to-tr from-fintech-blueDark via-fintech-blue to-fintech-cyan flex items-center justify-center shadow-md shadow-blue-900/40 border border-blue-400/30">
+          <svg viewBox="0 0 152 152" class="w-5 h-5">
+            <path d="M42,48 C42,40 48,36 56,36 L96,36 C104,36 110,40 110,48 L110,84 C110,105 92,118 76,118 C60,118 42,105 42,84 Z" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="60" y="66" width="8" height="26" rx="4" fill="#ffffff" opacity="0.85"/>
+            <rect x="73" y="54" width="8" height="46" rx="4" fill="#38bdf8"/>
+            <rect x="86" y="62" width="8" height="32" rx="4" fill="#ffffff"/>
+          </svg>
+          <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-corporate-navy flex items-center justify-center">
+            <span class="w-1 h-1 rounded-full bg-white"></span>
+          </span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-[15px] font-bold tracking-tight text-white leading-tight">Chat Accountant</h1>
+            <span id="hdrPro" class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-fintech-blue/20 text-blue-300 border border-blue-500/40">PRO</span>
+            <span id="hdrDot" title="Sync status" style="background:#34d399"></span>
+          </div>
+          <div id="hdrSync" class="flex items-center gap-1.5 mt-0.5">
+            <span class="relative flex h-1.5 w-1.5">
+              <span id="syncPing" class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background:#34d399"></span>
+              <span id="syncDot" class="relative inline-flex rounded-full h-1.5 w-1.5" style="background:#34d399"></span>
+            </span>
+            <p class="text-[11px] font-medium text-slate-400 flex items-center gap-1 tracking-tight">
+              <span id="syncText">Connecting…</span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div id="hdrActions" class="flex items-center gap-1">
+        <button id="btnExport" aria-label="Export CSV" class="h-7 w-7 flex items-center justify-center rounded-lg bg-corporate-subtle/90 hover:bg-corporate-surface active:bg-blue-600/30 text-slate-300 hover:text-white border border-slate-700/60 transition shadow-sm" type="button">
+          <i class="ph ph-file-csv text-base"></i>
+        </button>
+        <button id="btnReset" aria-label="Reset all data" class="h-7 w-7 flex items-center justify-center rounded-lg bg-corporate-subtle/90 hover:bg-corporate-surface active:bg-blue-600/30 text-slate-300 hover:text-white border border-slate-700/60 transition shadow-sm" type="button">
+          <i class="ph ph-arrows-clockwise text-base"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Pages -->
+  <div id="pages" class="flex-1 min-h-0 flex flex-col">
+
+    <!-- CHAT PAGE -->
+    <div id="chatPage" class="flex-1 min-h-0 flex flex-col">
+      <section id="summarySection" class="shrink-0 z-30 px-3 pt-2 pb-2 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm">
+        <div class="grid grid-cols-3 gap-1.5">
+          <article class="bg-gradient-to-b from-emerald-50/50 to-white rounded-lg p-2 border border-emerald-200/70 shadow-fintech-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Income</span>
+              <div class="flex items-center gap-0.5 text-fintech-emerald bg-emerald-100/70 px-1 py-0.5 rounded text-[9px] font-semibold">
+                <i class="ph-bold ph-arrow-down-left text-[10px]"></i> In
+              </div>
+            </div>
+            <div>
+              <div class="font-mono text-[12.5px] font-bold text-slate-900 tracking-tight" id="sumIncome">₹0.00</div>
+              <div class="w-full bg-emerald-100 h-1 rounded-full mt-1 overflow-hidden">
+                <div class="bg-fintech-emerald h-full rounded-full" id="barIncome" style="width:0%"></div>
+              </div>
+            </div>
+          </article>
+          <article class="bg-gradient-to-b from-rose-50/40 to-white rounded-lg p-2 border border-rose-200/70 shadow-fintech-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Expense</span>
+              <div class="flex items-center gap-0.5 text-fintech-ruby bg-rose-100/70 px-1 py-0.5 rounded text-[9px] font-semibold">
+                <i class="ph-bold ph-arrow-up-right text-[10px]"></i> Out
+              </div>
+            </div>
+            <div>
+              <div class="font-mono text-[12.5px] font-bold text-slate-900 tracking-tight" id="sumExpense">₹0.00</div>
+              <div class="w-full bg-rose-100 h-1 rounded-full mt-1 overflow-hidden">
+                <div class="bg-fintech-ruby h-full rounded-full" id="barExpense" style="width:0%"></div>
+              </div>
+            </div>
+          </article>
+          <article class="bg-corporate-navy rounded-lg p-2 border border-corporate-border shadow-md flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute -right-3 -bottom-3 opacity-10">
+              <i class="ph-bold ph-chart-line-up text-5xl text-white"></i>
+            </div>
+            <div class="flex items-center justify-between mb-1 z-10">
+              <span class="text-[10px] font-bold tracking-wider text-slate-300 uppercase">Net</span>
+              <span id="netMarginWrap" class="flex items-center gap-0.5 text-[9px] font-bold text-emerald-300 bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-500/30">
+                <i class="ph-bold ph-trend-up text-[9px]"></i><span id="netMargin">0%</span>
+              </span>
+            </div>
+            <div class="z-10">
+              <div class="font-mono text-[12.5px] font-bold text-white tracking-tight" id="sumNet">₹0.00</div>
+              <p class="text-[9px] text-blue-200/80 font-medium mt-1 truncate" id="netLabel">Break-even</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <div id="dateBanner" class="shrink-0 px-3.5 py-1.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between gap-2" style="display:none;">
+        <span class="text-[11px] font-semibold text-amber-800 flex items-center gap-1.5"><i class="ph-bold ph-calendar text-xs"></i><span id="dateBannerText"></span></span>
+        <button type="button" id="dateBannerReset" class="text-[10.5px] font-bold text-amber-700 hover:text-amber-900 underline flex-shrink-0">Reset to today</button>
+      </div>
+
+      <main id="chatLog" class="flex-1 overflow-y-auto px-3 pt-2 pb-3 flex flex-col space-y-2.5 bg-slate-50/80"></main>
+
+      <!-- Composer -->
+      <footer id="composerFooter" class="shrink-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 shadow-2xl">
+        <div id="presetsRow" class="px-3 pt-1.5 pb-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-100" style="display:none;">
+          <span class="text-[10px] font-mono font-bold uppercase text-slate-400 mr-1 tracking-wider flex items-center gap-0.5 flex-shrink-0">
+            <i class="ph-bold ph-lightning-fill text-amber-500"></i> Fast:
+          </span>
+          <button type="button" data-round="up" title="Round up to the next rupee" aria-label="Round up" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition"><i class="ph-bold ph-arrow-line-up text-[12px]"></i></button>
+          <button type="button" data-round="down" title="Round down to the whole rupee" aria-label="Round down" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition"><i class="ph-bold ph-arrow-line-down text-[12px]"></i></button>
+          <button type="button" data-amt="1" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹1</button>
+          <button type="button" data-amt="5" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹5</button>
+          <button type="button" data-amt="10" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹10</button>
+          <button type="button" data-amt="100" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹100</button>
+          <button type="button" data-amt="500" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹500</button>
+          <button type="button" data-amt="1000" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹1,000</button>
+          <button type="button" data-amt="5000" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹5,000</button>
+        </div>
+        <div class="px-3 pt-1.5 pb-1">
+          <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-300/80 rounded-2xl p-1 shadow-inner focus-within:ring-2 focus-within:ring-fintech-blue focus-within:bg-white focus-within:border-transparent transition-all">
+            <input id="composerInput" class="flex-1 border-0 bg-transparent py-1.5 px-2 text-[13px] placeholder-slate-400 text-slate-800 font-medium focus:ring-0 focus:outline-none disabled:opacity-50" placeholder="Tap an option above ↑" disabled>
+            <button id="composerSkip" type="button" class="items-center justify-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition text-xs font-semibold px-2.5 h-8" style="display:none;">Skip</button>
+            <button id="composerCancel" type="button" title="Cancel this transaction" aria-label="Cancel this transaction" class="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 active:scale-95 transition flex-shrink-0">
+              <i class="ph-bold ph-x text-base"></i>
+            </button>
+            <button id="composerSend" type="button" class="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-200 text-slate-400 active:scale-95 transition flex-shrink-0" disabled>
+              <i class="ph-bold ph-paper-plane-right text-base"></i>
+            </button>
+          </div>
+        </div>
+        <div id="footerNoteRow" class="px-4 pb-1 text-center">
+          <p class="text-[10px] font-mono text-slate-400 tracking-tight flex items-center justify-center gap-1.5">
+            <i class="ph-bold ph-shield-check text-fintech-emerald text-xs"></i>
+            <span id="footerNote">Your data is saved to your account</span>
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <!-- MANAGE PAGE -->
+    <div id="managePage" class="hidden flex-1 min-h-0 flex flex-col">
+      <div class="shrink-0 px-3 pt-2 pb-2 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm">
+        <h2 class="text-[15px] font-bold text-slate-800 mb-2">Manage Data</h2>
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
+          <button class="manage-tab flex-shrink-0" data-section="debtors">Debtors</button>
+          <button class="manage-tab flex-shrink-0" data-section="creditors">Creditors</button>
+          <button class="manage-tab flex-shrink-0" data-section="categories">Categories</button>
+          <button class="manage-tab flex-shrink-0" data-section="accounts">Accounts</button>
+        </div>
+      </div>
+      <div id="manageContent" class="flex-1 overflow-y-auto p-3 space-y-2.5 bg-slate-50/80"></div>
+    </div>
+
+    <!-- REQUESTS PAGE: transactions other people send to confirm, and the ones you sent -->
+    <div id="requestsPage" class="hidden flex-1 min-h-0 flex flex-col">
+      <div class="shrink-0 px-3 pt-2 pb-2 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm flex items-center justify-between">
+        <h2 class="text-[15px] font-bold text-slate-800">Requests</h2>
+        <button type="button" id="btnRefreshRequests" aria-label="Refresh" class="h-7 w-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"><i class="ph-bold ph-arrows-clockwise text-sm"></i></button>
+      </div>
+      <div id="requestsContent" class="flex-1 overflow-y-auto p-3 space-y-2.5 bg-slate-50/80"></div>
+    </div>
+
+    <!-- PROFILE PAGE -->
+    <div id="profilePage" class="hidden flex-1 min-h-0 flex flex-col overflow-y-auto bg-slate-50/80"></div>
+
+    <!-- SETTINGS PAGE (placeholder) -->
+    <div id="settingsPage" class="hidden flex-1 min-h-0 flex flex-col overflow-y-auto bg-slate-50/80"></div>
+
+  </div>
+
+  <!-- Bottom navigation -->
+  <nav id="bottomNav" class="shrink-0 z-40 bg-white border-t border-slate-200/90 flex items-stretch shadow-[0_-2px_8px_rgba(15,23,42,0.04)]">
+    <button class="nav-tab flex-1 flex flex-col items-center justify-center gap-0 py-1" data-page="chat">
+      <i class="ph-bold ph-chat-circle-dots text-base"></i><span class="text-[10px] font-semibold">Chat</span>
+    </button>
+    <button class="nav-tab flex-1 flex flex-col items-center justify-center gap-0 py-1" data-page="manage">
+      <i class="ph-bold ph-squares-four text-base"></i><span class="text-[10px] font-semibold">Manage</span>
+    </button>
+    <button class="nav-tab relative flex-1 flex flex-col items-center justify-center gap-0 py-1" data-page="requests" id="navRequests">
+      <i class="ph-bold ph-tray text-base"></i><span class="text-[10px] font-semibold">Requests</span>
+      <span id="requestsBadge" class="absolute top-0 left-1/2 ml-2 min-w-[15px] h-[15px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold items-center justify-center leading-none" style="display:none;">0</span>
+    </button>
+    <button class="nav-tab flex-1 flex flex-col items-center justify-center gap-0 py-1" data-page="profile">
+      <i class="ph-bold ph-user-circle text-base"></i><span class="text-[10px] font-semibold">Profile</span>
+    </button>
+    <button class="nav-tab flex-1 flex flex-col items-center justify-center gap-0 py-1" data-page="settings">
+      <i class="ph-bold ph-gear-six text-base"></i><span class="text-[10px] font-semibold">Settings</span>
+    </button>
+  </nav>
+
+  <!-- Printable bill target. Hidden on screen; shown (and everything else hidden) only
+       while printing — see the #printArea rules in <style> above. -->
+  <div id="printArea"></div>
+
+  <!-- ============================================================================
+       AD SPACE — Google AdSense placeholder (mobile banner / anchor unit)
+       ----------------------------------------------------------------------------
+       LAYOUT PLACEHOLDER ONLY. No ad-network script is loaded here, and no
+       requests are made to any ad server. This reserves the space and shows
+       what a standard 320x50 mobile banner looks like so the rest of the
+       layout can be built around it.
+
+       TO GO LIVE WITH REAL ADSENSE:
+       1. Get this site/app approved at https://www.google.com/adsense
+          (AdSense will only serve ads on a verified, approved domain).
+       2. Add the AdSense loader script once, in <head>, replacing YOUR_PUBLISHER_ID:
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
+       3. Replace the contents of the #adSpace div below with your real ad unit, e.g.:
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+                 data-ad-slot="YOUR_AD_SLOT_ID"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+          (Or use AdSense's "Anchor ad" unit type, which is designed for exactly
+          this bottom-of-screen placement on mobile.)
+       ============================================================================ -->
+  <div id="adSpace" class="shrink-0 w-full bg-slate-100 border-t border-slate-200 flex flex-col items-center justify-center gap-0 py-0.5 safe-bottom">
+    <span class="text-[9px] font-mono uppercase tracking-wider text-slate-400">Advertisement</span>
+    <div class="w-full max-w-[320px] h-[50px] mx-3 border border-dashed border-slate-300 rounded-md bg-white flex items-center justify-center text-slate-400 text-[11px] font-medium">
+      AdSense slot — 320×50
+    </div>
+  </div>
+
+  <!-- Splash Screen -->
+  <div id="splashScreen" class="absolute inset-0 flex-col items-center justify-center bg-corporate-navy text-white transition-opacity duration-300 px-8" style="display:flex; z-index:100;">
+    <!-- Inverted logo: transparent background, lighter sapphire badge (pops against the navy page),
+         dark glyph inside the badge, and light/white text — no white card wrapper needed. -->
+    <div class="w-full max-w-[300px]">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 240" width="100%" style="display:block;height:auto;">
+          <defs>
+            <linearGradient id="sapphireBlue-splash" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#3b82f6"/>
+              <stop offset="100%" stop-color="#1d4ed8"/>
+            </linearGradient>
+            <linearGradient id="cyanAccent-splash" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#93c5fd"/>
+            </linearGradient>
+            <filter id="badgeShadow-splash" x="-10%" y="-10%" width="125%" height="130%">
+              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.35"/>
+            </filter>
+          </defs>
+          <g transform="translate(48, 44)" filter="url(#badgeShadow-splash)">
+            <rect x="0" y="0" width="152" height="152" rx="42" fill="url(#sapphireBlue-splash)"/>
+            <rect x="1" y="1" width="150" height="150" rx="41" fill="none" stroke="#93c5fd" stroke-width="1.5" stroke-opacity="0.55"/>
+            <ellipse cx="76" cy="38" rx="52" ry="24" fill="#ffffff" opacity="0.14"/>
+            <path d="M42,48 C42,40 48,36 56,36 L96,36 C104,36 110,40 110,48 L110,84 C110,105 92,118 76,118 C60,118 42,105 42,84 Z" fill="#0b192c" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.85" stroke-linecap="round"/>
+            <path d="M46,62 C62,76 90,76 106,62" fill="none" stroke="url(#cyanAccent-splash)" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="60" y="66" width="6" height="26" rx="3" fill="#ffffff" opacity="0.8"/>
+            <rect x="73" y="54" width="6" height="46" rx="3" fill="#38bdf8"/>
+            <rect x="86" y="62" width="6" height="32" rx="3" fill="#ffffff" opacity="0.95"/>
+            <circle cx="106" cy="42" r="5" fill="#10b981"/>
+            <circle cx="106" cy="42" r="2" fill="#ffffff"/>
+          </g>
+          <g transform="translate(232, 50)">
+            <text x="0" y="60" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="800" letter-spacing="-1.5" fill="#ffffff">
+              Financial
+            </text>
+            <text x="0" y="118" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" letter-spacing="-1">
+              <tspan fill="#94a3b8" font-weight="500">Chat</tspan>
+              <tspan dx="10" fill="#60a5fa" font-weight="800">Accountant</tspan>
+            </text>
+          </g>
+        </svg>
+    </div>
+    <p class="w-full max-w-[300px] text-center text-[12px] text-slate-400 mt-1 mb-8">Smart bookkeeping, made simple</p>
+    <div class="w-8 h-8 border-2 border-slate-600 border-t-fintech-cyan rounded-full animate-spin"></div>
+  </div>
+
+  <!-- PIN Lock / Login Screen -->
+  <div id="lockScreen" class="absolute inset-0 flex-col bg-slate-50 px-8 py-10 safe-top safe-bottom" style="display:none; z-index:90;">
+    <div class="flex-1 flex flex-col items-center justify-center text-center">
+      <div class="w-16 h-16 rounded-2xl bg-corporate-navy flex items-center justify-center shadow-md mb-5">
+        <i class="ph-bold ph-lock-key text-2xl text-white" id="lockIcon"></i>
+      </div>
+      <h2 class="text-lg font-bold text-slate-800 mb-1" id="lockTitle">Enter your PIN</h2>
+      <p class="text-[12.5px] text-slate-500 mb-6 max-w-[240px] leading-relaxed" id="lockSubtitle">Your ledger is protected on this device.</p>
+      <div id="pinDots" class="flex items-center gap-3 mb-3"></div>
+      <p class="text-[11.5px] font-semibold h-4 text-rose-600" id="pinMessage"></p>
+    </div>
+    <div id="pinKeypad" class="grid grid-cols-3 gap-3 max-w-[280px] mx-auto w-full mb-3"></div>
+    <div class="text-center" id="lockFooterLink"></div>
+  </div>
+
+  <!-- Login (Google) Screen -->
+  <div id="loginScreen" class="absolute inset-0 flex-col bg-slate-50 px-8 py-10 safe-top safe-bottom" style="display:none; z-index:95;">
+    <div class="flex-1 flex flex-col items-center justify-center text-center">
+      <div class="w-full max-w-[280px] rounded-3xl shadow-lg overflow-hidden mb-4 border border-slate-200">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 240" width="100%" style="display:block;height:auto;">
+          <defs>
+            <linearGradient id="bgGrad-login" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="100%" stop-color="#f8faff"/>
+            </linearGradient>
+            <linearGradient id="brandNavy-login" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0f2444"/>
+              <stop offset="50%" stop-color="#0b192c"/>
+              <stop offset="100%" stop-color="#071220"/>
+            </linearGradient>
+            <linearGradient id="sapphireBlue-login" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#3b82f6"/>
+              <stop offset="100%" stop-color="#1d4ed8"/>
+            </linearGradient>
+            <linearGradient id="cyanAccent-login" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#60a5fa"/>
+            </linearGradient>
+            <filter id="badgeShadow-login" x="-10%" y="-10%" width="125%" height="130%">
+              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0b192c" flood-opacity="0.12"/>
+            </filter>
+          </defs>
+          <rect x="2" y="2" width="676" height="236" rx="28" fill="url(#bgGrad-login)" stroke="#e2e8f0" stroke-width="1.5"/>
+          <g transform="translate(48, 44)" filter="url(#badgeShadow-login)">
+            <rect x="0" y="0" width="152" height="152" rx="42" fill="url(#brandNavy-login)"/>
+            <rect x="1" y="1" width="150" height="150" rx="41" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-opacity="0.45"/>
+            <ellipse cx="76" cy="38" rx="52" ry="24" fill="#38bdf8" opacity="0.12"/>
+            <path d="M42,48 C42,40 48,36 56,36 L96,36 C104,36 110,40 110,48 L110,84 C110,105 92,118 76,118 C60,118 42,105 42,84 Z" fill="#142c4c" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+            <path d="M46,62 C62,76 90,76 106,62" fill="none" stroke="url(#cyanAccent-login)" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="60" y="66" width="6" height="26" rx="3" fill="#ffffff" opacity="0.8"/>
+            <rect x="73" y="54" width="6" height="46" rx="3" fill="#38bdf8"/>
+            <rect x="86" y="62" width="6" height="32" rx="3" fill="#ffffff" opacity="0.95"/>
+            <circle cx="106" cy="42" r="5" fill="#10b981"/>
+            <circle cx="106" cy="42" r="2" fill="#ffffff"/>
+          </g>
+          <g transform="translate(232, 50)">
+            <text x="0" y="60" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="800" letter-spacing="-1.5" fill="#0b192c">
+              Financial
+            </text>
+            <text x="0" y="118" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" letter-spacing="-1">
+              <tspan fill="#475569" font-weight="500">Chat</tspan>
+              <tspan dx="10" fill="#2563eb" font-weight="800">Accountant</tspan>
+            </text>
+          </g>
+        </svg>
+      </div>
+      <p class="text-[13px] text-slate-500 mb-8 max-w-[260px] leading-relaxed">Sign in to keep your ledger, customers and bills saved to your account.</p>
+      <button id="btnGoogleLogin" type="button" class="w-full max-w-[300px] h-12 bg-white hover:bg-slate-50 active:scale-[0.98] transition rounded-xl border border-slate-300 flex items-center justify-center gap-3 px-4 shadow-sm">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+          <path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" fill="#4285F4"></path>
+          <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" fill="#34A853"></path>
+          <path d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.17 0 9.99 0 12s.45 3.83 1.25 5.42l4.03-3.15z" fill="#FBBC05"></path>
+          <path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" fill="#EA4335"></path>
+        </svg>
+        <span id="googleBtnText" class="text-[14px] font-semibold text-slate-800">Continue with Google</span>
+      </button>
+      <p id="loginMessage" class="text-[12px] font-semibold text-rose-600 mt-3 min-h-[16px]"></p>
+    </div>
+    <div id="demoNotice" class="rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11.5px] leading-relaxed px-3 py-2 text-center" style="display:none;">
+      <strong>Demo mode</strong> — Google sign-in is simulated with a dummy account. You start with a blank ledger; nothing is sent to any server.
+    </div>
+  </div>
+</div>
+
+<!-- Libraries -->
+<script src="lib/jquery/jquery-3.7.1.min.js"></script>
+<!-- Settings (API address, Google client id) -->
+<script src="js/config.js"></script>
+<!-- Data layer: talks to the .NET API. panel.js wraps it; the UI only ever calls Panel.* -->
+<script src="js/database_api.js"></script>
+<script src="js/panel.js"></script>
+<!-- PWA helpers (service worker, install prompt) -->
+<script src="js/pwa.js"></script>
+<!-- Application code, in dependency-friendly order (jsPDF / html2canvas load on demand from lib/pdf) -->
+<script src="js/01-state.js"></script>
+<script src="js/02-chat-ui.js"></script>
+<script src="js/03-export.js"></script>
+<script src="js/04-helpers.js"></script>
+<script src="js/05-flows-basic.js"></script>
+<script src="js/06-gst-billing.js"></script>
+<script src="js/07-print-share.js"></script>
+<script src="js/08-sale-purchase.js"></script>
+<script src="js/09-views.js"></script>
+<script src="js/10-statements.js"></script>
+<script src="js/11-main-menu.js"></script>
+<script src="js/12-navigation.js"></script>
+<script src="js/13-pin-settings.js"></script>
+<script src="js/14-manage.js"></script>
+<script src="js/15-requests.js"></script>
+<script src="js/16-profile.js"></script>
+<script src="js/17-boot.js"></script>
+</body>
+</html>

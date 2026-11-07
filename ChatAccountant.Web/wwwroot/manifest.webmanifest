@@ -1,0 +1,18 @@
+{
+  "name": "Chat Accountant",
+  "short_name": "Accountant",
+  "description": "Smart bookkeeping, made simple - chat-based accounting with GST.",
+  "id": "/",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B192C",
+  "theme_color": "#0B192C",
+  "categories": ["finance", "business", "productivity"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
