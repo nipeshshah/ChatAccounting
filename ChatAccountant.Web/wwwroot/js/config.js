@@ -7,7 +7,12 @@
                    Leave EMPTY to use the API's dev login (only works when the API
                    runs in Development with Auth:AllowDevLogin = true).
    ============================================================================ */
+//window.APP_CONFIG = {
+//  apiBaseUrl: "https://localhost:7100",
+//  googleClientId: ""
+//};
+
 window.APP_CONFIG = {
-  apiBaseUrl: "https://localhost:7100",
-  googleClientId: ""
+    apiBaseUrl: "https://v60nm4gp-7100.inc1.devtunnels.ms",
+    googleClientId: ""
 };
