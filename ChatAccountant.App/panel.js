@@ -106,14 +106,6 @@
       logout: function () {
         return run("auth.logout", function () { return DB.auth.logout(); })
           .done(function () { Panel.user = null; emit("logout"); });
-      },
-      // Mobile-number verification (needed to send/receive transaction requests)
-      sendPhoneOtp: function (phone) {
-        return run("auth.phoneOtp", function () { return DB.auth.sendPhoneOtp(phone); });
-      },
-      verifyPhoneOtp: function (phone, code) {
-        return run("auth.phoneVerify", function () { return DB.auth.verifyPhoneOtp(phone, code); })
-          .done(function (u) { if (u) Panel.user = u; });
       }
     },
 
@@ -130,26 +122,6 @@
       add: function (entry) {
         var snapshot = clone(entry);
         return enqueue("ledger.add", null, function () { return DB.ledger.add(snapshot); });
-      }
-    },
-
-    // Transaction requests between users. Optional: a provider without Database.shares just
-    // turns the feature off (supportsShares = false) instead of breaking.
-    supportsShares: !!DB.shares,
-    supportsLookup: !!(DB.profiles && DB.profiles.lookupByPhone),
-    profiles: {
-      lookupByPhone: function (phone) { return run("profiles.lookup", function () { return DB.profiles.lookupByPhone(phone); }); }
-    },
-    supportsPhone: !!(DB.auth && DB.auth.sendPhoneOtp && DB.auth.verifyPhoneOtp),
-    shares: {
-      send: function (input) {
-        var snapshot = clone(input);
-        return enqueue("shares.send", null, function () { return DB.shares.send(snapshot); });
-      },
-      listIncoming: function () { return run("shares.incoming", function () { return DB.shares.listIncoming(); }); },
-      listOutgoing: function () { return run("shares.outgoing", function () { return DB.shares.listOutgoing(); }); },
-      respond: function (id, status) {
-        return enqueue("shares.respond", null, function () { return DB.shares.respond(id, status); });
       }
     },
 

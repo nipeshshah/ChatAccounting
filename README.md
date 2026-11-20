@@ -7,7 +7,7 @@ ChatAccountant.sln
 |   |-- Models/             Entities + DTOs     Data/ AppDbContext     Services/ token, Google, OTP, mapper
 |-- ChatAccountant.Web/     ASP.NET Core 8 static host for the PWA (everything lives in wwwroot/)
 |   |-- wwwroot/index.html, manifest.webmanifest, service-worker.js
-|   |-- wwwroot/js/         config.js, database_api.js, panel.js, pwa.js, 01-state.js ... 17-boot.js
+|   |-- wwwroot/js/         config.js, database_api.js, panel.js, pwa.js, 01-state.js ... 19-boot.js
 |   |-- wwwroot/css/        tailwind.css (compiled), app.css      wwwroot/lib/  jQuery, jsPDF, html2canvas, icons, fonts (self-hosted)
 |   |-- tailwind/           Tailwind source (only needed if you change CSS classes)
 |-- Database/schema.sql     optional hand-run SQL script
@@ -47,6 +47,18 @@ Tailwind is compiled, not loaded from a CDN (so the app works offline). After ad
 ## API summary
 `POST /api/auth/google|dev`, `GET /api/auth/me`, `POST /api/auth/phone/send|verify`,
 `GET|PUT /api/config`, `GET|POST /api/ledger`,
-`POST /api/shares`, `GET /api/shares/incoming|outgoing`, `POST /api/shares/{id}/respond`,
+`DELETE /api/ledger/{id}` (Undo), `POST /api/shares`, `GET /api/shares/incoming|outgoing`, `POST /api/shares/{id}/respond`, `DELETE /api/shares/{id}` (withdraw a pending request, Undo),
 `GET /api/profiles/lookup?phone=`, `DELETE /api/account/data`. Every row is filtered by the user id in the JWT
 (this replaces Supabase row-level security).
+
+## Usability features (v1.2)
+- **Review before saving** (`js/17-review-undo.js`): every flow ends with a summary card (Save / Edit). Edit re-asks one field only.
+- **Undo toast**: 8 seconds after saving. It removes the entry, restores the debtor/creditor balance and withdraws a request that
+  was sent to the other party (if they have not answered yet). Needs `DELETE /api/ledger/{id}`; a data provider without
+  `ledger.remove` simply shows no Undo (`Panel.supportsUndo`).
+- **First-launch set-up wizard** (`js/18-setup-wizard.js`): business profile, GST rates, payment accounts, currency/number format.
+  Shown once when no business name / GST rates exist (`setupDone` is saved in the config).
+- **Number format**: Indian (1,23,456.00) by default; Settings > Currency & number format switches to International or Plain
+  and changes the currency symbol. CSV exports always use plain numbers.
+- **Touch targets**: buttons are at least 44px tall (`css/app.css`), body text 13-15px, amount fields use the decimal keypad.
+- The ad banner was removed.

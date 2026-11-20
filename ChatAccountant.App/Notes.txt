@@ -1,0 +1,11 @@
+
+   Project: ChatAccounting
+   Password: RamLakhan@123
+   PRoject Url: https://wrqocosuhmepkokmgxew.supabase.co
+   Publishable Key: sb_publishable_j1xqkFAUzDAk3Iw2mpByeg_c_Is7hdy
+   
+    Google CallBackurl
+    https://wrqocosuhmepkokmgxew.supabase.co/auth/v1/callback
+
+    Credential Secret
+    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

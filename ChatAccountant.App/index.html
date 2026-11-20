@@ -1,0 +1,2132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport">
+<title>Chat Accountant</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@phosphor-icons/web@2.0.3"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<!-- Data layer: swap this ONE line for the real backend file later -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="database_supabase.js"></script>
+<script src="panel.js"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          corporate: { navy:'#0B192C', darker:'#06101E', subtle:'#152438', surface:'#1E293B', border:'#2A3F5F' },
+          fintech: { blue:'#2563EB', blueDark:'#1D4ED8', cyan:'#38BDF8', blueSoft:'#EBF2FF', emerald:'#059669', emeraldLight:'#ECFDF5', ruby:'#DC2626', rubyLight:'#FEF2F2', slate:'#F8FAFC', muted:'#64748B' }
+        },
+        fontFamily: {
+          sans: ['Plus Jakarta Sans','-apple-system','BlinkMacSystemFont','sans-serif'],
+          mono: ['JetBrains Mono','monospace']
+        },
+        boxShadow: {
+          'fintech-sm': '0 1px 3px 0 rgba(11,25,44,0.05), 0 1px 2px -1px rgba(11,25,44,0.05)',
+          'bubble-bot': '0 2px 8px rgba(15,23,42,0.04), 0 1px 2px rgba(15,23,42,0.02)',
+          'bubble-user': '0 4px 12px rgba(0,102,255,0.22)'
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body{ -webkit-tap-highlight-color: transparent; font-feature-settings: "cv02","cv03","cv04","cv11"; }
+  .no-scrollbar::-webkit-scrollbar{ display:none; }
+  .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }
+  /* 100dvh tracks the *visible* viewport on mobile (the URL bar no longer hides the bottom nav/ad bar);
+     the 100vh line first is the fallback for older browsers that don't understand dvh. */
+  .app-frame{ height:100vh; height:100dvh; }
+  .app-min-h{ min-height:100vh; min-height:100dvh; }
+  .safe-top{ padding-top: max(env(safe-area-inset-top,0px), 4px); }
+  .safe-bottom{ padding-bottom: max(env(safe-area-inset-bottom,0px), 4px); }
+  .manage-tab{ padding:6px 12px; border-radius:8px; font-size:12px; font-weight:600; background:#fff; border:1px solid #E2E8F0; color:#475569; }
+  .manage-tab.active{ background:#0B192C; border-color:#0B192C; color:#fff; }
+  .nav-tab{ color:#94A3B8; }
+  .nav-tab.active{ color:#0066FF; }
+
+  /* Printing a bill: render it in-page (no popup window — mobile browsers block those
+     reliably once the open() call happens outside a synchronous click, which is
+     unavoidable in a chat flow). Everything else on the page is hidden while printing. */
+  #printArea{ position:fixed; top:0; left:0; width:0; height:0; overflow:hidden; visibility:hidden; }
+  @media print{
+    body *{ visibility:hidden !important; }
+    #printArea, #printArea *{ visibility:visible !important; }
+    #printArea{ position:static; width:auto; height:auto; overflow:visible; }
+  }
+</style>
+</head>
+<body class="font-sans text-slate-800 antialiased selection:bg-fintech-blue selection:text-white flex justify-center app-min-h bg-[#070F1C]">
+
+<div class="app-frame w-full max-w-[430px] flex flex-col shadow-2xl relative bg-slate-50 border-x border-slate-200/80 overflow-hidden">
+
+  <!-- Header -->
+  <header class="shrink-0 z-40 bg-corporate-navy text-white shadow-lg border-b border-corporate-subtle safe-top">
+    <div class="px-3 pt-1 pb-2 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="relative w-8 h-8 rounded-lg bg-gradient-to-tr from-fintech-blueDark via-fintech-blue to-fintech-cyan flex items-center justify-center shadow-md shadow-blue-900/40 border border-blue-400/30">
+          <svg viewBox="0 0 152 152" class="w-5 h-5">
+            <path d="M42,48 C42,40 48,36 56,36 L96,36 C104,36 110,40 110,48 L110,84 C110,105 92,118 76,118 C60,118 42,105 42,84 Z" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="60" y="66" width="8" height="26" rx="4" fill="#ffffff" opacity="0.85"/>
+            <rect x="73" y="54" width="8" height="46" rx="4" fill="#38bdf8"/>
+            <rect x="86" y="62" width="8" height="32" rx="4" fill="#ffffff"/>
+          </svg>
+          <span class="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-corporate-navy flex items-center justify-center">
+            <span class="w-1 h-1 rounded-full bg-white"></span>
+          </span>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-[15px] font-bold tracking-tight text-white leading-tight">Chat Accountant</h1>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider bg-fintech-blue/20 text-blue-300 border border-blue-500/40">PRO</span>
+          </div>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="relative flex h-1.5 w-1.5">
+              <span id="syncPing" class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style="background:#34d399"></span>
+              <span id="syncDot" class="relative inline-flex rounded-full h-1.5 w-1.5" style="background:#34d399"></span>
+            </span>
+            <p class="text-[11px] font-medium text-slate-400 flex items-center gap-1 tracking-tight">
+              <span id="syncText">Connecting…</span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-1">
+        <button id="btnExport" aria-label="Export CSV" class="h-7 w-7 flex items-center justify-center rounded-lg bg-corporate-subtle/90 hover:bg-corporate-surface active:bg-blue-600/30 text-slate-300 hover:text-white border border-slate-700/60 transition shadow-sm" type="button">
+          <i class="ph ph-file-csv text-base"></i>
+        </button>
+        <button id="btnReset" aria-label="Reset all data" class="h-7 w-7 flex items-center justify-center rounded-lg bg-corporate-subtle/90 hover:bg-corporate-surface active:bg-blue-600/30 text-slate-300 hover:text-white border border-slate-700/60 transition shadow-sm" type="button">
+          <i class="ph ph-arrows-clockwise text-base"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Pages -->
+  <div id="pages" class="flex-1 min-h-0 flex flex-col">
+
+    <!-- CHAT PAGE -->
+    <div id="chatPage" class="flex-1 min-h-0 flex flex-col">
+      <section id="summarySection" class="shrink-0 z-30 px-3 pt-2 pb-2 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm">
+        <div class="grid grid-cols-3 gap-1.5">
+          <article class="bg-gradient-to-b from-emerald-50/50 to-white rounded-lg p-2 border border-emerald-200/70 shadow-fintech-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Income</span>
+              <div class="flex items-center gap-0.5 text-fintech-emerald bg-emerald-100/70 px-1 py-0.5 rounded text-[9px] font-semibold">
+                <i class="ph-bold ph-arrow-down-left text-[10px]"></i> In
+              </div>
+            </div>
+            <div>
+              <div class="font-mono text-[12.5px] font-bold text-slate-900 tracking-tight" id="sumIncome">₹0.00</div>
+              <div class="w-full bg-emerald-100 h-1 rounded-full mt-1 overflow-hidden">
+                <div class="bg-fintech-emerald h-full rounded-full" id="barIncome" style="width:0%"></div>
+              </div>
+            </div>
+          </article>
+          <article class="bg-gradient-to-b from-rose-50/40 to-white rounded-lg p-2 border border-rose-200/70 shadow-fintech-sm flex flex-col justify-between">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Expense</span>
+              <div class="flex items-center gap-0.5 text-fintech-ruby bg-rose-100/70 px-1 py-0.5 rounded text-[9px] font-semibold">
+                <i class="ph-bold ph-arrow-up-right text-[10px]"></i> Out
+              </div>
+            </div>
+            <div>
+              <div class="font-mono text-[12.5px] font-bold text-slate-900 tracking-tight" id="sumExpense">₹0.00</div>
+              <div class="w-full bg-rose-100 h-1 rounded-full mt-1 overflow-hidden">
+                <div class="bg-fintech-ruby h-full rounded-full" id="barExpense" style="width:0%"></div>
+              </div>
+            </div>
+          </article>
+          <article class="bg-corporate-navy rounded-lg p-2 border border-corporate-border shadow-md flex flex-col justify-between relative overflow-hidden">
+            <div class="absolute -right-3 -bottom-3 opacity-10">
+              <i class="ph-bold ph-chart-line-up text-5xl text-white"></i>
+            </div>
+            <div class="flex items-center justify-between mb-1 z-10">
+              <span class="text-[10px] font-bold tracking-wider text-slate-300 uppercase">Net</span>
+              <span id="netMarginWrap" class="flex items-center gap-0.5 text-[9px] font-bold text-emerald-300 bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-500/30">
+                <i class="ph-bold ph-trend-up text-[9px]"></i><span id="netMargin">0%</span>
+              </span>
+            </div>
+            <div class="z-10">
+              <div class="font-mono text-[12.5px] font-bold text-white tracking-tight" id="sumNet">₹0.00</div>
+              <p class="text-[9px] text-blue-200/80 font-medium mt-1 truncate" id="netLabel">Break-even</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <div id="dateBanner" class="shrink-0 px-3.5 py-1.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between gap-2" style="display:none;">
+        <span class="text-[11px] font-semibold text-amber-800 flex items-center gap-1.5"><i class="ph-bold ph-calendar text-xs"></i><span id="dateBannerText"></span></span>
+        <button type="button" id="dateBannerReset" class="text-[10.5px] font-bold text-amber-700 hover:text-amber-900 underline flex-shrink-0">Reset to today</button>
+      </div>
+
+      <main id="chatLog" class="flex-1 overflow-y-auto px-3 pt-2 pb-3 flex flex-col space-y-2.5 bg-slate-50/80"></main>
+
+      <!-- Composer -->
+      <footer id="composerFooter" class="shrink-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 shadow-2xl">
+        <div id="presetsRow" class="px-3 pt-1.5 pb-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-100" style="display:none;">
+          <span class="text-[10px] font-mono font-bold uppercase text-slate-400 mr-1 tracking-wider flex items-center gap-0.5 flex-shrink-0">
+            <i class="ph-bold ph-lightning-fill text-amber-500"></i> Fast:
+          </span>
+          <button type="button" data-amt="100" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹100</button>
+          <button type="button" data-amt="500" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹500</button>
+          <button type="button" data-amt="1000" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹1,000</button>
+          <button type="button" data-amt="5000" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹5,000</button>
+        </div>
+        <div class="px-3 pt-1.5 pb-1">
+          <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-300/80 rounded-2xl p-1 shadow-inner focus-within:ring-2 focus-within:ring-fintech-blue focus-within:bg-white focus-within:border-transparent transition-all">
+            <input id="composerInput" class="flex-1 border-0 bg-transparent py-1.5 px-2 text-[13px] placeholder-slate-400 text-slate-800 font-medium focus:ring-0 focus:outline-none disabled:opacity-50" placeholder="Tap an option above ↑" disabled>
+            <button id="composerSkip" type="button" class="items-center justify-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition text-xs font-semibold px-2.5 h-8" style="display:none;">Skip</button>
+            <button id="composerCancel" type="button" title="Cancel this transaction" aria-label="Cancel this transaction" class="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 active:scale-95 transition flex-shrink-0">
+              <i class="ph-bold ph-x text-base"></i>
+            </button>
+            <button id="composerSend" type="button" class="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-200 text-slate-400 active:scale-95 transition flex-shrink-0" disabled>
+              <i class="ph-bold ph-paper-plane-right text-base"></i>
+            </button>
+          </div>
+        </div>
+        <div class="px-4 pb-1 text-center">
+          <p class="text-[10px] font-mono text-slate-400 tracking-tight flex items-center justify-center gap-1.5">
+            <i class="ph-bold ph-shield-check text-fintech-emerald text-xs"></i>
+            <span id="footerNote">Your data is saved to your account</span>
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <!-- MANAGE PAGE -->
+    <div id="managePage" class="hidden flex-1 min-h-0 flex flex-col">
+      <div class="shrink-0 px-3 pt-2 pb-2 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm">
+        <h2 class="text-[15px] font-bold text-slate-800 mb-2">Manage Data</h2>
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar">
+          <button class="manage-tab flex-shrink-0" data-section="debtors">Debtors</button>
+          <button class="manage-tab flex-shrink-0" data-section="creditors">Creditors</button>
+          <button class="manage-tab flex-shrink-0" data-section="categories">Categories</button>
+          <button class="manage-tab flex-shrink-0" data-section="accounts">Accounts</button>
+        </div>
+      </div>
+      <div id="manageContent" class="flex-1 overflow-y-auto p-3 space-y-2.5 bg-slate-50/80"></div>
+    </div>
+
+    <!-- PROFILE PAGE (placeholder) -->
+    <div id="profilePage" class="hidden flex-1 min-h-0 flex flex-col overflow-y-auto bg-slate-50/80"></div>
+
+    <!-- SETTINGS PAGE (placeholder) -->
+    <div id="settingsPage" class="hidden flex-1 min-h-0 flex flex-col overflow-y-auto bg-slate-50/80"></div>
+
+  </div>
+
+  <!-- Bottom navigation -->
+  <nav class="shrink-0 z-40 bg-white border-t border-slate-200/90 flex items-stretch shadow-[0_-2px_8px_rgba(15,23,42,0.04)]">
+    <button class="nav-tab flex-1 flex flex-col items-center justify-center gap-0 py-1" data-page="chat">
+      <i class="ph-bold ph-chat-circle-dots text-base"></i><span class="text-[10px] font-semibold">Chat</span>
+    </button>
+    <button class="nav-tab flex-1 flex flex-col items-center justify-center gap-0 py-1" data-page="manage">
+      <i class="ph-bold ph-squares-four text-base"></i><span class="text-[10px] font-semibold">Manage</span>
+    </button>
+    <button class="nav-tab flex-1 flex flex-col items-center justify-center gap-0 py-1" data-page="profile">
+      <i class="ph-bold ph-user-circle text-base"></i><span class="text-[10px] font-semibold">Profile</span>
+    </button>
+    <button class="nav-tab flex-1 flex flex-col items-center justify-center gap-0 py-1" data-page="settings">
+      <i class="ph-bold ph-gear-six text-base"></i><span class="text-[10px] font-semibold">Settings</span>
+    </button>
+  </nav>
+
+  <!-- Printable bill target. Hidden on screen; shown (and everything else hidden) only
+       while printing — see the #printArea rules in <style> above. -->
+  <div id="printArea"></div>
+
+  <!-- ============================================================================
+       AD SPACE — Google AdSense placeholder (mobile banner / anchor unit)
+       ----------------------------------------------------------------------------
+       LAYOUT PLACEHOLDER ONLY. No ad-network script is loaded here, and no
+       requests are made to any ad server. This reserves the space and shows
+       what a standard 320x50 mobile banner looks like so the rest of the
+       layout can be built around it.
+
+       TO GO LIVE WITH REAL ADSENSE:
+       1. Get this site/app approved at https://www.google.com/adsense
+          (AdSense will only serve ads on a verified, approved domain).
+       2. Add the AdSense loader script once, in <head>, replacing YOUR_PUBLISHER_ID:
+            <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
+       3. Replace the contents of the #adSpace div below with your real ad unit, e.g.:
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+                 data-ad-slot="YOUR_AD_SLOT_ID"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+          (Or use AdSense's "Anchor ad" unit type, which is designed for exactly
+          this bottom-of-screen placement on mobile.)
+       ============================================================================ -->
+  <div id="adSpace" class="shrink-0 w-full bg-slate-100 border-t border-slate-200 flex flex-col items-center justify-center gap-0 py-0.5 safe-bottom">
+    <span class="text-[9px] font-mono uppercase tracking-wider text-slate-400">Advertisement</span>
+    <div class="w-full max-w-[320px] h-[50px] mx-3 border border-dashed border-slate-300 rounded-md bg-white flex items-center justify-center text-slate-400 text-[11px] font-medium">
+      AdSense slot — 320×50
+    </div>
+  </div>
+
+  <!-- Splash Screen -->
+  <div id="splashScreen" class="absolute inset-0 flex-col items-center justify-center bg-corporate-navy text-white transition-opacity duration-300 px-8" style="display:flex; z-index:100;">
+    <!-- Inverted logo: transparent background, lighter sapphire badge (pops against the navy page),
+         dark glyph inside the badge, and light/white text — no white card wrapper needed. -->
+    <div class="w-full max-w-[300px]">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 240" width="100%" height="auto" style="display:block;">
+          <defs>
+            <linearGradient id="sapphireBlue-splash" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#3b82f6"/>
+              <stop offset="100%" stop-color="#1d4ed8"/>
+            </linearGradient>
+            <linearGradient id="cyanAccent-splash" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#93c5fd"/>
+            </linearGradient>
+            <filter id="badgeShadow-splash" x="-10%" y="-10%" width="125%" height="130%">
+              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000000" flood-opacity="0.35"/>
+            </filter>
+          </defs>
+          <g transform="translate(48, 44)" filter="url(#badgeShadow-splash)">
+            <rect x="0" y="0" width="152" height="152" rx="42" fill="url(#sapphireBlue-splash)"/>
+            <rect x="1" y="1" width="150" height="150" rx="41" fill="none" stroke="#93c5fd" stroke-width="1.5" stroke-opacity="0.55"/>
+            <ellipse cx="76" cy="38" rx="52" ry="24" fill="#ffffff" opacity="0.14"/>
+            <path d="M42,48 C42,40 48,36 56,36 L96,36 C104,36 110,40 110,48 L110,84 C110,105 92,118 76,118 C60,118 42,105 42,84 Z" fill="#0b192c" stroke="#ffffff" stroke-width="2.5" stroke-opacity="0.85" stroke-linecap="round"/>
+            <path d="M46,62 C62,76 90,76 106,62" fill="none" stroke="url(#cyanAccent-splash)" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="60" y="66" width="6" height="26" rx="3" fill="#ffffff" opacity="0.8"/>
+            <rect x="73" y="54" width="6" height="46" rx="3" fill="#38bdf8"/>
+            <rect x="86" y="62" width="6" height="32" rx="3" fill="#ffffff" opacity="0.95"/>
+            <circle cx="106" cy="42" r="5" fill="#10b981"/>
+            <circle cx="106" cy="42" r="2" fill="#ffffff"/>
+          </g>
+          <g transform="translate(232, 50)">
+            <text x="0" y="60" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="800" letter-spacing="-1.5" fill="#ffffff">
+              Financial
+            </text>
+            <text x="0" y="118" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" letter-spacing="-1">
+              <tspan fill="#94a3b8" font-weight="500">Chat</tspan>
+              <tspan dx="10" fill="#60a5fa" font-weight="800">Accountant</tspan>
+            </text>
+          </g>
+        </svg>
+    </div>
+    <p class="w-full max-w-[300px] text-center text-[12px] text-slate-400 mt-1 mb-8">Smart bookkeeping, made simple</p>
+    <div class="w-8 h-8 border-2 border-slate-600 border-t-fintech-cyan rounded-full animate-spin"></div>
+  </div>
+
+  <!-- PIN Lock / Login Screen -->
+  <div id="lockScreen" class="absolute inset-0 flex-col bg-slate-50 px-8 py-10 safe-top safe-bottom" style="display:none; z-index:90;">
+    <div class="flex-1 flex flex-col items-center justify-center text-center">
+      <div class="w-16 h-16 rounded-2xl bg-corporate-navy flex items-center justify-center shadow-md mb-5">
+        <i class="ph-bold ph-lock-key text-2xl text-white" id="lockIcon"></i>
+      </div>
+      <h2 class="text-lg font-bold text-slate-800 mb-1" id="lockTitle">Enter your PIN</h2>
+      <p class="text-[12.5px] text-slate-500 mb-6 max-w-[240px] leading-relaxed" id="lockSubtitle">Your ledger is protected on this device.</p>
+      <div id="pinDots" class="flex items-center gap-3 mb-3"></div>
+      <p class="text-[11.5px] font-semibold h-4 text-rose-600" id="pinMessage"></p>
+    </div>
+    <div id="pinKeypad" class="grid grid-cols-3 gap-3 max-w-[280px] mx-auto w-full mb-3"></div>
+    <div class="text-center" id="lockFooterLink"></div>
+  </div>
+
+  <!-- Login (Google) Screen -->
+  <div id="loginScreen" class="absolute inset-0 flex-col bg-slate-50 px-8 py-10 safe-top safe-bottom" style="display:none; z-index:95;">
+    <div class="flex-1 flex flex-col items-center justify-center text-center">
+      <div class="w-full max-w-[280px] rounded-3xl shadow-lg overflow-hidden mb-4 border border-slate-200">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 240" width="100%" height="auto" style="display:block;">
+          <defs>
+            <linearGradient id="bgGrad-login" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="100%" stop-color="#f8faff"/>
+            </linearGradient>
+            <linearGradient id="brandNavy-login" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0f2444"/>
+              <stop offset="50%" stop-color="#0b192c"/>
+              <stop offset="100%" stop-color="#071220"/>
+            </linearGradient>
+            <linearGradient id="sapphireBlue-login" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#3b82f6"/>
+              <stop offset="100%" stop-color="#1d4ed8"/>
+            </linearGradient>
+            <linearGradient id="cyanAccent-login" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#38bdf8"/>
+              <stop offset="100%" stop-color="#60a5fa"/>
+            </linearGradient>
+            <filter id="badgeShadow-login" x="-10%" y="-10%" width="125%" height="130%">
+              <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#0b192c" flood-opacity="0.12"/>
+            </filter>
+          </defs>
+          <rect x="2" y="2" width="676" height="236" rx="28" fill="url(#bgGrad-login)" stroke="#e2e8f0" stroke-width="1.5"/>
+          <g transform="translate(48, 44)" filter="url(#badgeShadow-login)">
+            <rect x="0" y="0" width="152" height="152" rx="42" fill="url(#brandNavy-login)"/>
+            <rect x="1" y="1" width="150" height="150" rx="41" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-opacity="0.45"/>
+            <ellipse cx="76" cy="38" rx="52" ry="24" fill="#38bdf8" opacity="0.12"/>
+            <path d="M42,48 C42,40 48,36 56,36 L96,36 C104,36 110,40 110,48 L110,84 C110,105 92,118 76,118 C60,118 42,105 42,84 Z" fill="#142c4c" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+            <path d="M46,62 C62,76 90,76 106,62" fill="none" stroke="url(#cyanAccent-login)" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="60" y="66" width="6" height="26" rx="3" fill="#ffffff" opacity="0.8"/>
+            <rect x="73" y="54" width="6" height="46" rx="3" fill="#38bdf8"/>
+            <rect x="86" y="62" width="6" height="32" rx="3" fill="#ffffff" opacity="0.95"/>
+            <circle cx="106" cy="42" r="5" fill="#10b981"/>
+            <circle cx="106" cy="42" r="2" fill="#ffffff"/>
+          </g>
+          <g transform="translate(232, 50)">
+            <text x="0" y="60" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="52" font-weight="800" letter-spacing="-1.5" fill="#0b192c">
+              Financial
+            </text>
+            <text x="0" y="118" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" letter-spacing="-1">
+              <tspan fill="#475569" font-weight="500">Chat</tspan>
+              <tspan dx="10" fill="#2563eb" font-weight="800">Accountant</tspan>
+            </text>
+          </g>
+        </svg>
+      </div>
+      <p class="text-[13px] text-slate-500 mb-8 max-w-[260px] leading-relaxed">Sign in to keep your ledger, customers and bills saved to your account.</p>
+      <button id="btnGoogleLogin" type="button" class="w-full max-w-[300px] h-12 bg-white hover:bg-slate-50 active:scale-[0.98] transition rounded-xl border border-slate-300 flex items-center justify-center gap-3 px-4 shadow-sm">
+        <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+          <path d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z" fill="#4285F4"></path>
+          <path d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z" fill="#34A853"></path>
+          <path d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.17 0 9.99 0 12s.45 3.83 1.25 5.42l4.03-3.15z" fill="#FBBC05"></path>
+          <path d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z" fill="#EA4335"></path>
+        </svg>
+        <span id="googleBtnText" class="text-[14px] font-semibold text-slate-800">Continue with Google</span>
+      </button>
+      <p id="loginMessage" class="text-[12px] font-semibold text-rose-600 mt-3 min-h-[16px]"></p>
+    </div>
+    <div id="demoNotice" class="rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11.5px] leading-relaxed px-3 py-2 text-center" style="display:none;">
+      <strong>Demo mode</strong> — Google sign-in is simulated with a dummy account. You start with a blank ledger; nothing is sent to any server.
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= DATA MODEL (unchanged logic) ================= */
+const DEFAULT_DATA = {
+  currency: "₹",
+  categories: {
+    income: ["Consulting", "Salary", "Interest Income", "Other Income"],
+    expense: ["Rent", "Utilities", "Salaries & Wages", "Office Supplies", "Marketing", "Travel", "Software & Subscriptions", "Bank Fees", "Miscellaneous"]
+  },
+  accounts: ["Cash", "UPI", "Other"],
+  debtors: [],
+  creditors: [],
+  gstRates: [],
+  billCounter: 1,
+  invoiceFormat: "INV-[INDEX]",
+  shop: { name: "", address: "", state: "", gstNumber: "" }
+};
+
+const PIN_KEY_BASE = "ledgerChat.pinHash";
+
+// Lightweight local hash (cyrb53) — good enough to gate a screen lock,
+// NOT cryptographic encryption. The PIN never leaves this device.
+function simpleHash(str){
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for(let i = 0; i < str.length; i++){
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+}
+
+// The PIN is a per-device, per-user screen lock. It is stored locally and is NOT sent to the server.
+function pinKey(){ return PIN_KEY_BASE + "." + (Panel.user ? Panel.user.id : "anon"); }
+function getPinHash(){ return localStorage.getItem(pinKey()); }
+function hasPinSet(){ return !!getPinHash(); }
+function setPin(pin){ localStorage.setItem(pinKey(), simpleHash(pin)); }
+function clearPin(){ localStorage.removeItem(pinKey()); }
+
+/* ---- App state: loaded through Panel after sign-in ---- */
+let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+let ledger = [];
+let receivedLedger = [];
+
+function normalizeConfig(cfg){
+  const d = Object.assign(JSON.parse(JSON.stringify(DEFAULT_DATA)), cfg || {});
+  d.categories = Object.assign({ income: [], expense: [] }, d.categories || {});
+  // "Sales"/"Purchases" as plain categories are retired — Sale/Purchase now only happen via the dedicated flow
+  d.categories.income = (d.categories.income || []).filter(c => c !== "Sales");
+  d.categories.expense = (d.categories.expense || []).filter(c => c !== "Purchases");
+  d.shop = Object.assign({ name: "", address: "", state: "", gstNumber: "" }, d.shop || {});
+  if(!Array.isArray(d.accounts)) d.accounts = ["Cash", "UPI", "Other"];
+  if(!Array.isArray(d.debtors)) d.debtors = [];
+  if(!Array.isArray(d.creditors)) d.creditors = [];
+  if(!Array.isArray(d.gstRates)) d.gstRates = [];
+  if(!d.invoiceFormat) d.invoiceFormat = "INV-[INDEX]";
+  if(typeof d.billCounter !== "number") d.billCounter = 1;
+  return d;
+}
+
+// Every write goes: app -> Panel (jQuery) -> Database file -> server
+function saveData(){ Panel.config.save(data); }
+function addLedgerEntry(entry){
+  ledger.push(entry);            // show it on screen immediately
+  updateSummary();
+  Panel.ledger.add(entry).done(function(saved){ if(saved && saved.id) entry.id = saved.id; });
+  return entry;
+}
+
+function localISO(d){ return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function todayISO(){ return localISO(new Date()); }
+
+/* ---- Working date: defaults to today; overridden via the "Set Date" menu option ---- */
+let workingDate = null; // null = use the real today
+function currentDate(){ return workingDate || todayISO(); }
+function updateDateBanner(){
+  const active = !!(workingDate && workingDate !== todayISO());
+  const banner = document.getElementById("dateBanner");
+  if(!banner) return;
+  banner.style.display = active ? "flex" : "none";
+  if(active) document.getElementById("dateBannerText").textContent = `Logging transactions as ${workingDate}`;
+}
+function fmt(n){ return (Math.round(n*100)/100).toFixed(2); }
+function timeNow(){
+  const d = new Date();
+  let h = d.getHours();
+  const m = d.getMinutes().toString().padStart(2,"0");
+  const ap = h >= 12 ? "PM" : "AM";
+  h = h % 12; if(h === 0) h = 12;
+  return `${h}:${m} ${ap}`;
+}
+
+/* ================= RENDERING PRIMITIVES ================= */
+const chatLog = document.getElementById("chatLog");
+const composerInput = document.getElementById("composerInput");
+const composerSend = document.getElementById("composerSend");
+const composerSkip = document.getElementById("composerSkip");
+const composerCancel = document.getElementById("composerCancel");
+const presetsRow = document.getElementById("presetsRow");
+const presetButtons = [...document.querySelectorAll(".preset-btn")];
+
+let lastCard = null; // the most recently opened bot card, so quick-replies land inside it
+
+/* ---- cancel-anytime plumbing ---- */
+class CancelFlow extends Error {}
+let activePrompt = null; // { reject, cleanup } for whichever askQuickReply/askText is currently pending
+
+function cancelCurrentFlow(){
+  if(!activePrompt) return;
+  const { reject, cleanup } = activePrompt;
+  activePrompt = null;
+  cleanup();
+  appendUserMessage("Cancel");
+  reject(new CancelFlow());
+}
+composerCancel.addEventListener("click", cancelCurrentFlow);
+
+function setSendEnabled(enabled){
+  composerSend.disabled = !enabled;
+  composerSend.className = enabled
+    ? "h-8 w-8 flex items-center justify-center rounded-lg bg-blue-600 hover:bg-blue-700 text-white active:scale-95 transition shadow-md shadow-blue-500/30 flex-shrink-0"
+    : "h-8 w-8 flex items-center justify-center rounded-lg bg-slate-200 text-slate-400 active:scale-95 transition flex-shrink-0";
+}
+
+function scrollBottom(){ chatLog.scrollTop = chatLog.scrollHeight; }
+
+const ICONS = {
+  "income": "ph-arrow-circle-down-right", "expense": "ph-arrow-circle-up-right",
+  "cash": "ph-money", "upi": "ph-qr-code", "other": "ph-bank",
+  "debtor": "ph-user", "creditor": "ph-user",
+  "sale": "ph-receipt", "purchase": "ph-shopping-bag",
+  "new": "ph-plus", "custom": "ph-sliders", "back": "ph-arrow-left",
+  "continue": "ph-arrow-right", "menu": "ph-list", "cancel": "ph-x"
+};
+function iconFor(label){
+  const l = label.toLowerCase();
+  for(const key in ICONS){ if(l.includes(key)) return ICONS[key]; }
+  return null;
+}
+
+function newBotCard(icon){
+  const row = document.createElement("div");
+  row.className = "flex items-start gap-2 w-full";
+  row.innerHTML = `
+    <div class="w-6 h-6 rounded-md bg-corporate-navy flex-shrink-0 flex items-center justify-center text-white text-sm shadow-sm border border-slate-700 mt-0.5">
+      <i class="ph-bold ${icon || 'ph-chat-circle-text'} text-blue-400"></i>
+    </div>
+    <div class="flex-1 flex flex-col items-start min-w-0">
+      <div class="bot-card bg-white border border-slate-200/90 rounded-2xl rounded-tl-sm p-2.5 shadow-bubble-bot w-full max-w-full overflow-hidden"></div>
+      <span class="text-[10px] font-mono font-medium text-slate-400 mt-1 px-1">${timeNow()}</span>
+    </div>`;
+  chatLog.appendChild(row);
+  const card = row.querySelector(".bot-card");
+  lastCard = card;
+  scrollBottom();
+  return card;
+}
+
+function botSay(text, opts = {}){
+  return new Promise(resolve=>{
+    setTimeout(()=>{
+      const card = newBotCard(opts.icon);
+      card.innerHTML = `<p class="text-slate-800 text-[13px] leading-snug">${text}</p>`;
+      scrollBottom();
+      resolve();
+    }, opts.delay !== undefined ? opts.delay : 180);
+  });
+}
+
+function appendUserMessage(text){
+  const row = document.createElement("div");
+  row.className = "flex flex-col items-end w-full";
+  row.innerHTML = `
+    <div class="bg-corporate-navy text-white rounded-2xl rounded-tr-sm px-3 py-1 shadow-bubble-user text-[12.5px] font-medium border border-slate-700 flex items-center gap-1.5 max-w-[85%] break-words">
+      <span>${text}</span>
+      <i class="ph-bold ph-check text-blue-400 text-xs flex-shrink-0"></i>
+    </div>
+    <span class="text-[10px] font-mono text-slate-400 mt-0.5 px-1">${timeNow()}</span>`;
+  chatLog.appendChild(row);
+  lastCard = null;
+  scrollBottom();
+}
+
+function setComposerIdle(){
+  composerInput.disabled = true;
+  setSendEnabled(false);
+  composerInput.value = "";
+  composerInput.placeholder = "Tap an option above ↑";
+  composerSkip.style.display = "none";
+  presetsRow.style.display = "none";
+}
+
+function askQuickReply(options, layout){
+  layout = layout || "wrap";
+  setComposerIdle();
+  return new Promise((resolve, reject)=>{
+    const card = lastCard || newBotCard();
+    const wrap = document.createElement("div");
+    wrap.className = layout === "grid"
+      ? "grid grid-cols-2 gap-1.5 mt-1.5"
+      : "flex flex-wrap gap-1 mt-1.5";
+
+    function disableAll(){
+      [...wrap.children].forEach(b=>{ b.disabled = true; b.classList.add("opacity-40","pointer-events-none"); });
+    }
+    const thisPrompt = { reject, cleanup: disableAll };
+    activePrompt = thisPrompt;
+
+    options.forEach(opt=>{
+      const btn = document.createElement("button");
+      btn.type = "button";
+      const icon = opt.icon || iconFor(opt.label);
+      const isNew = icon === "ph-plus" || icon === "ph-sliders";
+      let base, iconWrapClass = "";
+      if(layout === "grid"){
+        let tint = "bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700";
+        if(opt.variant === "income") tint = "bg-slate-50 border border-emerald-200 hover:bg-emerald-50 text-slate-700";
+        if(opt.variant === "expense") tint = "bg-slate-50 border border-rose-200 hover:bg-rose-50 text-slate-700";
+        iconWrapClass = opt.variant === "income" ? "bg-emerald-100 text-emerald-700" : opt.variant === "expense" ? "bg-rose-100 text-rose-700" : "bg-blue-100 text-blue-700";
+        base = `flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[12px] font-semibold text-left transition active:scale-[0.98] ${tint}`;
+        btn.className = base;
+        btn.innerHTML = `<div class="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 ${iconWrapClass}">
+            <i class="ph-bold ${icon || 'ph-dot'} text-sm"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="leading-none text-[12px] truncate">${opt.label}</div>
+            ${opt.hint ? `<span class="text-[9px] font-mono ${opt.variant === 'expense' ? 'text-rose-600' : 'text-emerald-600'}">${opt.hint}</span>` : ""}
+          </div>`;
+      } else {
+        if(isNew){
+          base = "px-2.5 py-1 rounded-lg bg-blue-50/70 border border-dashed border-blue-300 text-fintech-blue text-xs font-semibold hover:bg-blue-100/70 active:scale-95 transition flex items-center gap-1";
+        } else if(opt.variant === "income"){
+          base = "px-3 py-1 rounded-lg bg-slate-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-50 text-xs font-medium active:scale-95 transition flex items-center gap-1.5";
+        } else if(opt.variant === "expense"){
+          base = "px-3 py-1 rounded-lg bg-slate-50 border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-medium active:scale-95 transition flex items-center gap-1.5";
+        } else {
+          base = "px-3 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-medium active:scale-95 transition flex items-center gap-1.5";
+        }
+        btn.className = base;
+        btn.innerHTML = `${icon ? `<i class="ph-bold ${icon} text-xs"></i>` : ""}<span>${opt.label}</span>`;
+      }
+
+      btn.onclick = ()=>{
+        if(activePrompt === thisPrompt) activePrompt = null;
+        [...wrap.children].forEach(b=>{ b.disabled = true; b.classList.add("opacity-40","pointer-events-none"); });
+        btn.classList.remove("opacity-40","pointer-events-none");
+        btn.classList.add("!bg-corporate-navy","!text-white","!border-corporate-navy","ring-2","ring-blue-500/40");
+        appendUserMessage(opt.label);
+        resolve(opt.value);
+      };
+      wrap.appendChild(btn);
+    });
+
+    card.appendChild(wrap);
+    lastCard = null;
+    scrollBottom();
+  });
+}
+
+function askText(placeholder, opts = {}){
+  if(lastCard){
+    const hint = document.createElement("p");
+    hint.className = "text-[11px] text-slate-500 mt-1.5 flex items-center gap-1";
+    hint.innerHTML = `<i class="ph-bold ph-arrow-down text-slate-400"></i> Type your answer below and tap send`;
+    lastCard.appendChild(hint);
+    lastCard = null;
+  }
+  composerInput.disabled = false;
+  setSendEnabled(true);
+  composerInput.type = opts.dateInput ? "date" : (opts.numeric ? "number" : "text");
+  if(opts.numeric) composerInput.step = "any"; else composerInput.removeAttribute("step");
+  composerInput.value = opts.dateInput ? currentDate() : "";
+  composerInput.placeholder = placeholder;
+  composerSkip.style.display = opts.allowSkip ? "inline-flex" : "none";
+  presetsRow.style.display = opts.showPresets ? "flex" : "none";
+  composerInput.focus();
+
+  return new Promise((resolve, reject)=>{
+    function cleanup(){
+      composerSend.removeEventListener("click", submit);
+      composerInput.removeEventListener("keydown", onKeydown);
+      composerSkip.removeEventListener("click", skip);
+      presetButtons.forEach(b=>b.removeEventListener("click", onPreset));
+      setComposerIdle();
+    }
+    const thisPrompt = { reject, cleanup };
+    activePrompt = thisPrompt;
+    function submit(){
+      const val = composerInput.value.trim();
+      if(opts.required && !val){
+        composerInput.classList.add("ring-2","ring-rose-400");
+        setTimeout(()=>composerInput.classList.remove("ring-2","ring-rose-400"), 400);
+        composerInput.focus();
+        return;
+      }
+      if(activePrompt === thisPrompt) activePrompt = null;
+      cleanup();
+      appendUserMessage(val || "(skipped)");
+      resolve(val);
+    }
+    function skip(){
+      if(activePrompt === thisPrompt) activePrompt = null;
+      cleanup();
+      appendUserMessage("(skipped)");
+      resolve("");
+    }
+    function onPreset(e){
+      const add = parseFloat(e.currentTarget.dataset.amt) || 0;
+      const current = parseFloat(composerInput.value) || 0;
+      composerInput.value = current + add;
+      composerInput.focus();
+    }
+    function onKeydown(e){ if(e.key === "Enter"){ e.preventDefault(); submit(); } }
+
+    composerSend.addEventListener("click", submit);
+    composerInput.addEventListener("keydown", onKeydown);
+    composerSkip.addEventListener("click", skip);
+    presetButtons.forEach(b=>b.addEventListener("click", onPreset));
+  });
+}
+
+function updateSummary(){
+  let income = 0, expense = 0;
+  ledger.forEach(e=>{
+    if(e.type === "income") income += e.amount; else expense += e.amount;
+  });
+  document.getElementById("sumIncome").textContent = data.currency + fmt(income);
+  document.getElementById("sumExpense").textContent = data.currency + fmt(expense);
+  const net = income - expense;
+  document.getElementById("sumNet").textContent = data.currency + fmt(net);
+
+  const maxVal = Math.max(income, expense, 1);
+  document.getElementById("barIncome").style.width = Math.min(100, (income / maxVal) * 100) + "%";
+  document.getElementById("barExpense").style.width = Math.min(100, (expense / maxVal) * 100) + "%";
+
+  const marginPct = income > 0 ? Math.round((net / income) * 100) : 0;
+  const marginWrap = document.getElementById("netMarginWrap");
+  const marginEl = document.getElementById("netMargin");
+  const netLabel = document.getElementById("netLabel");
+  marginEl.textContent = (marginPct >= 0 ? "+" : "") + marginPct + "%";
+  if(net >= 0){
+    marginWrap.className = "flex items-center gap-0.5 text-[9px] font-bold text-emerald-300 bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-500/30";
+    netLabel.textContent = net === 0 ? "Break-even" : "Profitable surplus";
+  } else {
+    marginWrap.className = "flex items-center gap-0.5 text-[9px] font-bold text-rose-300 bg-rose-950/70 px-1 py-0.5 rounded border border-rose-500/30";
+    netLabel.textContent = "Running deficit";
+  }
+}
+
+/* ================= CSV EXPORT ================= */
+function buildCSV(){
+  const rows = [["Date","Type","Category","Account","Description","Debit","Credit","Taxable Amount","GST %","GST Amount","CGST Amount","SGST Amount","IGST Amount"]];
+  // Sort oldest-first by date; entries logged on the same date keep the order they were recorded in
+  // (stable sort). This matters now that "Set Date" lets a transaction be back-dated after the fact.
+  const sorted = ledger.slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+  sorted.forEach(e=>{
+    const split = e.taxSplit;
+    rows.push([
+      e.date, e.type, e.category, e.account,
+      (e.description || "").replace(/"/g,'""'),
+      e.type === "expense" ? fmt(e.amount) : "",
+      e.type === "income" ? fmt(e.amount) : "",
+      e.taxableAmount !== undefined ? fmt(e.taxableAmount) : "",
+      e.gstPercent !== undefined ? e.gstPercent : "",
+      e.gstAmount !== undefined ? fmt(e.gstAmount) : "",
+      split && split.type === "CGST_SGST" ? fmt(split.cgstAmount) : "",
+      split && split.type === "CGST_SGST" ? fmt(split.sgstAmount) : "",
+      split && split.type === "IGST" ? fmt(split.igstAmount) : ""
+    ]);
+  });
+  return rows.map(r => r.map(cell => `"${cell}"`).join(",")).join("\r\n");
+}
+
+function csvFileName(){ return `ledger_${todayISO()}.csv`; }
+
+// Mobile browsers — iOS Safari in particular — don't reliably honor the <a download> attribute;
+// tapping it often just opens/displays the file instead of saving it. The Web Share API (already
+// used for "Send") is the mechanism mobile OSes actually support for saving a file, so route
+// mobile downloads through it first and only fall back to the raw anchor-click method when
+// Web Share isn't available (which is still the right approach on desktop).
+function isMobileDevice(){
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/i.test(navigator.platform));
+}
+
+function downloadCSV(csv){
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = csvFileName();
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function shareCSV(csv){
+  try{
+    const file = new File([csv], csvFileName(), { type: "text/csv" });
+    if(navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({ files: [file], title: "Ledger export", text: `Ledger CSV export — ${todayISO()}` });
+      return true;
+    }
+  }catch(e){
+    if(e && e.name === "AbortError") return true; // user cancelled the native share sheet — not an error
+  }
+  return false;
+}
+
+function openEmailDraft(){
+  const subject = encodeURIComponent(`Ledger export ${todayISO()}`);
+  const body = encodeURIComponent("Your ledger CSV was just downloaded to this device — please attach it here before sending (email links can't attach files automatically).");
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+async function exportCSV(){
+  const csv = buildCSV();
+  if(isMobileDevice()){
+    const shared = await shareCSV(csv);
+    if(shared) return "share";
+  }
+  downloadCSV(csv);
+  return "download";
+}
+
+/* ================= SHARED HELPERS ================= */
+async function pickAccount(){
+  await botSay("Payment mode?", { icon: "ph-credit-card" });
+  return askQuickReply(data.accounts.map(a => ({ label: a, value: a })));
+}
+
+async function pickCategory(type){
+  const catList = data.categories[type];
+  let category = await askQuickReply(
+    catList.map(c => ({ label: c, value: c })).concat([{ label: "New category", value: "__new__" }])
+  );
+  if(category === "__new__"){
+    category = await askText("Type the new category name", { required: true });
+    if(!catList.includes(category)){ catList.push(category); saveData(); }
+  }
+  return category;
+}
+
+async function pickOrCreateParty(list, roleLabel){
+  if(list.length){
+    const opts = list.map((p,i)=>({ label: `${p.name} — ${data.currency}${fmt(p.balance)}`, value: String(i), icon: "ph-user" }));
+    opts.push({ label: `New ${roleLabel}`, value: "__new__" });
+    const choice = await askQuickReply(opts);
+    if(choice !== "__new__") return list[parseInt(choice,10)];
+  }
+  const name = await askText(`${roleLabel[0].toUpperCase()+roleLabel.slice(1)} name`, { required: true });
+  await botSay("Which state are they in? Used to work out CGST/SGST vs IGST on GST bills.", { icon: "ph-map-pin" });
+  const state = await askText("e.g. Maharashtra", { allowSkip: true });
+  const party = { name, balance: 0, state };
+  list.push(party);
+  saveData();
+  return party;
+}
+
+/* ================= FLOWS (logic unchanged) ================= */
+async function logIncomeFlow(){
+  const account = await pickAccount();
+  await botSay("Pick a category:", { icon: "ph-folder-notch-open" });
+  const category = await pickCategory("income");
+  await botSay("How much?", { icon: "ph-pencil-simple-line" });
+  const amount = parseFloat(await askText(`Amount (${data.currency})`, { numeric: true, required: true, showPresets: true })) || 0;
+  await botSay("Add a short description:", { icon: "ph-pencil-simple-line" });
+  const description = await askText("e.g. Invoice #204", { allowSkip: true });
+
+  addLedgerEntry({ date: currentDate(), type: "income", category, account, description, amount });
+  await botSay(`Logged: +${data.currency}${fmt(amount)} · ${category} · ${account}`, { icon: "ph-check-circle" });
+}
+
+async function logExpenseFlow(){
+  const account = await pickAccount();
+  await botSay("Pick a category:", { icon: "ph-folder-notch-open" });
+  const category = await pickCategory("expense");
+  await botSay("How much?", { icon: "ph-pencil-simple-line" });
+  const amount = parseFloat(await askText(`Amount (${data.currency})`, { numeric: true, required: true, showPresets: true })) || 0;
+  await botSay("Add a short description:", { icon: "ph-pencil-simple-line" });
+  const description = await askText("e.g. Office supplies", { allowSkip: true });
+
+  addLedgerEntry({ date: currentDate(), type: "expense", category, account, description, amount });
+  await botSay(`Logged: -${data.currency}${fmt(amount)} · ${category} · ${account}`, { icon: "ph-check-circle" });
+}
+
+async function receivedFlow(){
+  await botSay("Is this a debtor settling what they owe, or a fresh receipt?", { icon: "ph-hand-coins" });
+  const choice = await askQuickReply([
+    { label: "From a Debtor", value: "debtor", variant: "income", icon: "ph-user" },
+    { label: "Other receipt", value: "other", variant: "income", icon: "ph-receipt" }
+  ]);
+  if(choice === "other"){ await logIncomeFlow(); return; }
+
+  const debtor = await pickOrCreateParty(data.debtors, "debtor");
+  await botSay(`${debtor.name} currently owes ${data.currency}${fmt(debtor.balance)}.`);
+  const account = await pickAccount();
+  const amount = parseFloat(await askText(`Amount received (${data.currency})`, { numeric: true, required: true, showPresets: true })) || 0;
+
+  debtor.balance -= amount;
+  saveData();
+  addLedgerEntry({ date: currentDate(), type: "income", category: "Debtor Receipt", account, description: `Received from ${debtor.name}`, amount });
+  await botSay(`Logged: +${data.currency}${fmt(amount)} from ${debtor.name}. Balance now ${data.currency}${fmt(debtor.balance)}.`, { icon: "ph-check-circle" });
+}
+
+async function paidFlow(){
+  await botSay("Is this settling a creditor, or a fresh payment?", { icon: "ph-paper-plane-tilt" });
+  const choice = await askQuickReply([
+    { label: "To a Creditor", value: "creditor", variant: "expense", icon: "ph-user" },
+    { label: "Other payment", value: "other", variant: "expense", icon: "ph-receipt" }
+  ]);
+  if(choice === "other"){ await logExpenseFlow(); return; }
+
+  const creditor = await pickOrCreateParty(data.creditors, "creditor");
+  await botSay(`You currently owe ${creditor.name} ${data.currency}${fmt(creditor.balance)}.`);
+  const account = await pickAccount();
+  const amount = parseFloat(await askText(`Amount paid (${data.currency})`, { numeric: true, required: true, showPresets: true })) || 0;
+
+  creditor.balance -= amount;
+  saveData();
+  addLedgerEntry({ date: currentDate(), type: "expense", category: "Creditor Payment", account, description: `Paid to ${creditor.name}`, amount });
+  await botSay(`Logged: -${data.currency}${fmt(amount)} to ${creditor.name}. Balance now ${data.currency}${fmt(creditor.balance)}.`, { icon: "ph-check-circle" });
+}
+
+function nextBillNo(){
+  const num = data.billCounter;
+  const padded = String(num).padStart(3, "0");
+  const format = data.invoiceFormat || "INV-[INDEX]";
+  const no = format.includes("[INDEX]") ? format.replace("[INDEX]", padded) : format + padded;
+  data.billCounter = num + 1;
+  saveData();
+  return no;
+}
+
+/* ---- Shop (business) profile — asked once, saved to your account ---- */
+async function getShopDetails(){
+  if(data.shop && data.shop.name) return data.shop;
+  await botSay("First, let's set up your business details — these appear on every printed bill (one-time setup).", { icon: "ph-storefront" });
+  const name = await askText("Business / shop name", { required: true });
+  await botSay("Business address:", { icon: "ph-map-pin" });
+  const address = await askText("e.g. 12 MG Road, Mumbai", { allowSkip: true });
+  await botSay("State:", { icon: "ph-map-pin" });
+  const state = await askText("e.g. Maharashtra", { allowSkip: true });
+  await botSay("GST number (GSTIN):", { icon: "ph-identification-badge" });
+  const gstNumber = await askText("e.g. 27ABCDE1234F1Z5", { allowSkip: true });
+  data.shop = { name, address, state, gstNumber };
+  saveData();
+  await botSay("Saved — you can update this anytime from the Settings tab.", { icon: "ph-check-circle" });
+  return data.shop;
+}
+
+/* ---- Customer / supplier details — asked once per party, stored on the party record ---- */
+async function ensurePartyDetails(party, kind){
+  if(party.gstNumber !== undefined) return; // already asked (even if left blank)
+  const roleLabel = kind === "sale" ? "customer" : "supplier";
+  await botSay(`Add billing details for ${party.name}? Optional, but shows up on the invoice.`, { icon: "ph-address-book" });
+  party.address = await askText(`${roleLabel[0].toUpperCase() + roleLabel.slice(1)} address`, { allowSkip: true });
+  party.gstNumber = await askText(`${roleLabel[0].toUpperCase() + roleLabel.slice(1)} GSTIN (if registered)`, { allowSkip: true });
+  saveData();
+}
+
+/* ---- GST split: CGST+SGST (same state) vs IGST (different state) ---- */
+function computeGstSplit(sellerState, buyerState, gstPercent, gstAmount){
+  if(!sellerState || !buyerState) return null; // state unknown on one side — can't determine, fall back to a single GST line
+  const same = sellerState.trim().toLowerCase() === buyerState.trim().toLowerCase();
+  if(same){
+    return {
+      type: "CGST_SGST",
+      cgstPercent: gstPercent / 2, sgstPercent: gstPercent / 2,
+      cgstAmount: gstAmount / 2, sgstAmount: gstAmount / 2
+    };
+  }
+  return { type: "IGST", igstPercent: gstPercent, igstAmount: gstAmount };
+}
+
+function describeGstSplit(split, gstPercent, gstAmount){
+  if(!split) return `GST (${gstPercent}%): ${data.currency}${fmt(gstAmount)}`;
+  if(split.type === "CGST_SGST"){
+    return `CGST (${split.cgstPercent}%): ${data.currency}${fmt(split.cgstAmount)}  ·  SGST (${split.sgstPercent}%): ${data.currency}${fmt(split.sgstAmount)}`;
+  }
+  return `IGST (${split.igstPercent}%): ${data.currency}${fmt(split.igstAmount)}`;
+}
+
+/* ---- GST helpers ---- */
+async function getGstRates(){
+  if(data.gstRates && data.gstRates.length) return data.gstRates;
+  await botSay("What GST rates do you use? Enter as comma-separated percentages, e.g. 0,5,12,18,28", { icon: "ph-percent" });
+  const raw = await askText("e.g. 0,5,12,18,28", { required: true });
+  let rates = raw.split(",").map(s => parseFloat(s.trim())).filter(n => !isNaN(n));
+  if(!rates.length) rates = [0, 5, 12, 18, 28];
+  data.gstRates = rates;
+  saveData();
+  await botSay("Got it — saved. You can change these anytime from the Settings tab.");
+  return data.gstRates;
+}
+
+async function askGstPercent(){
+  const rates = await getGstRates();
+  await botSay("GST rate for this bill?", { icon: "ph-percent" });
+  const opts = rates.map(r => ({ label: `${r}%`, value: String(r) }));
+  opts.push({ label: "Custom %", value: "__custom__", icon: "ph-sliders" });
+  const choice = await askQuickReply(opts);
+  if(choice === "__custom__"){
+    const custom = await askText("Enter GST %", { numeric: true, required: true });
+    return parseFloat(custom) || 0;
+  }
+  return parseFloat(choice);
+}
+
+function generateBill(entry, kind, shop, party){
+  const billNo = nextBillNo();
+  const title = kind === "sale" ? "TAX INVOICE" : "PURCHASE BILL";
+  const partyLabel = kind === "sale" ? "Bill To" : "Bill From";
+
+  document.getElementById("printArea").innerHTML = `
+    <style>
+      #printArea .bill{font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#0B192C;max-width:640px;margin:0 auto;padding:34px;}
+      #printArea .header-row{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0066FF;padding-bottom:14px;gap:16px;}
+      #printArea .shop-name{font-size:1.35rem;font-weight:700;margin:0 0 4px;}
+      #printArea .bill-meta{font-size:0.82rem;color:#475569;line-height:1.5;}
+      #printArea .invoice-tag{text-align:right;flex-shrink:0;}
+      #printArea .invoice-tag .bill-title{font-size:1rem;font-weight:700;color:#0066FF;letter-spacing:0.04em;margin-bottom:4px;}
+      #printArea .party-box{margin-top:20px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px 16px;}
+      #printArea .party-box .label{font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748B;margin-bottom:3px;}
+      #printArea .party-box .name{font-size:1rem;font-weight:700;}
+      #printArea table{width:100%;border-collapse:collapse;margin-top:26px;}
+      #printArea td, #printArea th{padding:9px 6px;border-bottom:1px solid #E2E8F0;text-align:left;font-size:0.92rem;}
+      #printArea .num{text-align:right;font-family:'JetBrains Mono',monospace;}
+      #printArea .total-row td{font-weight:bold;border-top:2px solid #0066FF;border-bottom:none;font-size:1rem;}
+      #printArea .bill-footer{margin-top:34px;font-size:0.76rem;color:#94A3B8;text-align:center;}
+    </style>
+    <div class="bill">
+      <div class="header-row">
+        <div>
+          <p class="shop-name">${esc(shop.name) || "Your Business"}</p>
+          ${shop.address ? `<div class="bill-meta">${esc(shop.address)}</div>` : ""}
+          ${shop.state ? `<div class="bill-meta">State: ${esc(shop.state)}</div>` : ""}
+          ${shop.gstNumber ? `<div class="bill-meta">GSTIN: ${esc(shop.gstNumber)}</div>` : ""}
+        </div>
+        <div class="invoice-tag">
+          <div class="bill-title">${title}</div>
+          <div class="bill-meta">Bill No: ${esc(billNo)}</div>
+          <div class="bill-meta">Date: ${esc(entry.date)}</div>
+        </div>
+      </div>
+      <div class="party-box">
+        <div class="label">${partyLabel}</div>
+        <div class="name">${esc(party.name)}</div>
+        ${party.address ? `<div class="bill-meta">${esc(party.address)}</div>` : ""}
+        ${party.gstNumber ? `<div class="bill-meta">GSTIN: ${esc(party.gstNumber)}</div>` : ""}
+      </div>
+      <table>
+        <tr><th>Description</th><th class="num">Amount</th></tr>
+        <tr><td>${esc(entry.description || entry.category)}</td><td class="num">${data.currency}${fmt(entry.taxableAmount)}</td></tr>
+        ${entry.taxSplit && entry.taxSplit.type === "CGST_SGST"
+          ? `<tr><td>CGST (${entry.taxSplit.cgstPercent}%)</td><td class="num">${data.currency}${fmt(entry.taxSplit.cgstAmount)}</td></tr>
+             <tr><td>SGST (${entry.taxSplit.sgstPercent}%)</td><td class="num">${data.currency}${fmt(entry.taxSplit.sgstAmount)}</td></tr>`
+          : entry.taxSplit && entry.taxSplit.type === "IGST"
+          ? `<tr><td>IGST (${entry.taxSplit.igstPercent}%)</td><td class="num">${data.currency}${fmt(entry.taxSplit.igstAmount)}</td></tr>`
+          : `<tr><td>GST (${entry.gstPercent}%)</td><td class="num">${data.currency}${fmt(entry.gstAmount)}</td></tr>`
+        }
+        <tr class="total-row"><td>Total</td><td class="num">${data.currency}${fmt(entry.amount)}</td></tr>
+      </table>
+      <div class="bill-footer">Generated by Chat Accountant</div>
+    </div>`;
+
+  // A short delay lets the browser lay out the freshly-injected content before printing.
+  setTimeout(function(){ window.print(); }, 150);
+}
+
+async function offerBill(entry, kind, party){
+  const choice = await askQuickReply([
+    { label: "Generate bill", value: "yes", icon: "ph-printer" },
+    { label: "No thanks", value: "no", icon: "ph-x" }
+  ]);
+  if(choice === "yes"){
+    const shop = await getShopDetails();
+    if(party) await ensurePartyDetails(party, kind);
+    else party = { name: "Walk-in Customer" };
+    generateBill(entry, kind, shop, party);
+  }
+}
+
+async function saleFlow(){
+  await botSay("Credit sale or cash sale?", { icon: "ph-receipt" });
+  const mode = await askQuickReply([
+    { label: "Credit", value: "credit", variant: "income", icon: "ph-user" },
+    { label: "Cash", value: "cash", variant: "income", icon: "ph-money" }
+  ]);
+
+  let debtor = null, account;
+  if(mode === "credit"){
+    await botSay("Who's the debtor?", { icon: "ph-user" });
+    debtor = await pickOrCreateParty(data.debtors, "debtor");
+    account = debtor.name;
+  } else {
+    account = await pickAccount();
+  }
+
+  const category = "Sale";
+  const shop = await getShopDetails();
+
+  await botSay("Sale amount (before GST)?", { icon: "ph-pencil-simple-line" });
+  const amount = parseFloat(await askText(`Amount (${data.currency})`, { numeric: true, required: true, showPresets: true })) || 0;
+  const gstPercent = await askGstPercent();
+  const gstAmount = amount * gstPercent / 100;
+  const total = amount + gstAmount;
+  const taxSplit = computeGstSplit(shop.state, debtor ? debtor.state : null, gstPercent, gstAmount);
+  await botSay(`Taxable: ${data.currency}${fmt(amount)}  ·  ${describeGstSplit(taxSplit, gstPercent, gstAmount)}  ·  Total: ${data.currency}${fmt(total)}`, { icon: "ph-calculator" });
+
+  await botSay("Add a short description:", { icon: "ph-pencil-simple-line" });
+  const description = await askText(mode === "credit" ? "e.g. Invoice #305 (unpaid)" : "e.g. Counter sale", { allowSkip: true });
+
+  const entry = {
+    date: currentDate(), type: "income", category, account,
+    description: description || (mode === "credit" ? `Credit sale to ${debtor.name}` : "Cash sale"),
+    amount: total, taxableAmount: amount, gstPercent, gstAmount, taxSplit
+  };
+  if(debtor){
+    entry.party = debtor.name;
+    debtor.balance += total;
+    saveData();
+    addLedgerEntry(entry);
+    await botSay(`Recorded credit sale of ${data.currency}${fmt(total)} (incl. GST) to ${debtor.name}. They now owe ${data.currency}${fmt(debtor.balance)}.`, { icon: "ph-check-circle" });
+  } else {
+    addLedgerEntry(entry);
+    await botSay(`Logged: +${data.currency}${fmt(total)} (incl. GST) · Cash sale · ${account}`, { icon: "ph-check-circle" });
+  }
+
+  await offerBill(entry, "sale", debtor);
+}
+
+async function purchaseFlow(){
+  await botSay("Credit purchase or cash purchase?", { icon: "ph-shopping-bag" });
+  const mode = await askQuickReply([
+    { label: "Credit", value: "credit", variant: "expense", icon: "ph-user" },
+    { label: "Cash", value: "cash", variant: "expense", icon: "ph-money" }
+  ]);
+
+  let creditor = null, account;
+  if(mode === "credit"){
+    await botSay("Who's the creditor?", { icon: "ph-user" });
+    creditor = await pickOrCreateParty(data.creditors, "creditor");
+    account = creditor.name;
+  } else {
+    account = await pickAccount();
+  }
+
+  const category = "Purchase";
+  const shop = await getShopDetails();
+
+  await botSay("Purchase amount (before GST)?", { icon: "ph-pencil-simple-line" });
+  const amount = parseFloat(await askText(`Amount (${data.currency})`, { numeric: true, required: true, showPresets: true })) || 0;
+  const gstPercent = await askGstPercent();
+  const gstAmount = amount * gstPercent / 100;
+  const total = amount + gstAmount;
+  const taxSplit = computeGstSplit(creditor ? creditor.state : null, shop.state, gstPercent, gstAmount);
+  await botSay(`Taxable: ${data.currency}${fmt(amount)}  ·  ${describeGstSplit(taxSplit, gstPercent, gstAmount)}  ·  Total: ${data.currency}${fmt(total)}`, { icon: "ph-calculator" });
+
+  await botSay("Add a short description:", { icon: "ph-pencil-simple-line" });
+  const description = await askText(mode === "credit" ? "e.g. Bill #88 (unpaid)" : "e.g. Counter purchase", { allowSkip: true });
+
+  const entry = {
+    date: currentDate(), type: "expense", category, account,
+    description: description || (mode === "credit" ? `Credit purchase from ${creditor.name}` : "Cash purchase"),
+    amount: total, taxableAmount: amount, gstPercent, gstAmount, taxSplit
+  };
+  if(creditor){
+    entry.party = creditor.name;
+    creditor.balance += total;
+    saveData();
+    addLedgerEntry(entry);
+    await botSay(`Recorded credit purchase of ${data.currency}${fmt(total)} (incl. GST) from ${creditor.name}. You now owe them ${data.currency}${fmt(creditor.balance)}.`, { icon: "ph-check-circle" });
+  } else {
+    addLedgerEntry(entry);
+    await botSay(`Logged: -${data.currency}${fmt(total)} (incl. GST) · Cash purchase · ${account}`, { icon: "ph-check-circle" });
+  }
+}
+
+/* ---- View ---- */
+const TABLE_TH = "text-left font-semibold text-slate-500 uppercase tracking-wide pb-1.5 border-b border-slate-200 pr-2 whitespace-nowrap";
+const TABLE_TD = "py-1.5 pr-2 border-b border-slate-100 align-top";
+
+async function viewMenu(){
+  await botSay("View what?", { icon: "ph-book-open" });
+  const choice = await askQuickReply([
+    { label: "Transactions", value: "tx", icon: "ph-list-bullets" },
+    { label: "Debtors & Creditors", value: "balances", icon: "ph-users" }
+  ]);
+  if(choice === "tx") await viewLedger();
+  else await viewBalances();
+}
+
+const TX_ICONS = { "Sale": "ph-receipt", "Purchase": "ph-shopping-bag", "Debtor Receipt": "ph-hand-coins", "Creditor Payment": "ph-paper-plane-tilt" };
+
+function dayLabel(iso){
+  if(iso === todayISO()) return "Today";
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  if(iso === localISO(y)) return "Yesterday";
+  const parts = String(iso).split("-").map(Number);
+  const d = new Date(parts[0], parts[1] - 1, parts[2]);
+  if(isNaN(d.getTime())) return esc(iso);
+  const opts = { weekday: "short", day: "numeric", month: "short" };
+  if(parts[0] !== new Date().getFullYear()) opts.year = "numeric";
+  return d.toLocaleDateString(undefined, opts);
+}
+
+function txCardHtml(e){
+  const income = e.type === "income";
+  const icon = TX_ICONS[e.category] || (income ? "ph-arrow-down-left" : "ph-arrow-up-right");
+  const tint = income ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600";
+  const amtColor = income ? "text-emerald-600" : "text-rose-600";
+  const title = e.description || e.category || "Transaction";
+  const sub = [e.category, e.account].filter(Boolean).map(esc).join(" · ");
+  let gst = "";
+  if(e.gstAmount !== undefined){
+    const kind = e.taxSplit ? (e.taxSplit.type === "IGST" ? "IGST" : "CGST+SGST") : "GST";
+    gst = `<div class="mt-0.5"><span class="inline-block text-[9px] font-semibold leading-none px-1.5 py-1 rounded bg-slate-200/70 text-slate-600">${kind} ${esc(e.gstPercent)}%</span></div>`;
+  }
+  return `<div class="flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-xl px-2.5 py-2 mb-1.5">
+    <div class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${tint}"><i class="ph-bold ${icon} text-sm"></i></div>
+    <div class="min-w-0 flex-1">
+      <div class="text-[12.5px] font-semibold text-slate-800 truncate">${esc(title)}</div>
+      <div class="text-[10.5px] text-slate-500 truncate">${sub}</div>
+    </div>
+    <div class="text-right flex-shrink-0">
+      <div class="font-mono text-[12.5px] font-bold ${amtColor}">${income ? "+" : "-"}${data.currency}${fmt(e.amount)}</div>
+      ${gst}
+    </div>
+  </div>`;
+}
+
+async function viewLedger(){
+  const card = newBotCard("ph-book-open");
+  if(ledger.length === 0){
+    card.innerHTML = `<p class="text-slate-800 text-[13.5px]">Nothing logged yet.</p>`;
+    scrollBottom();
+    return;
+  }
+  // newest day first; within a day, most recently added first
+  const sorted = ledger.map((e, i) => ({ e, i }))
+    .sort((x, y) => x.e.date < y.e.date ? 1 : x.e.date > y.e.date ? -1 : y.i - x.i)
+    .map(x => x.e);
+
+  let html = `<div class="flex items-center justify-between mb-2.5">
+      <p class="text-[13px] font-semibold text-slate-800">Transaction history</p>
+      <span class="text-[10.5px] font-mono font-semibold text-slate-500 bg-slate-100 rounded-full px-2 py-0.5">${sorted.length}</span>
+    </div>`;
+  let lastDate = null;
+  sorted.forEach(e=>{
+    if(e.date !== lastDate){
+      html += `<div class="text-[10.5px] font-bold uppercase tracking-wide text-slate-400 mb-1.5 px-0.5 ${lastDate === null ? "" : "mt-3"}">${dayLabel(e.date)}</div>`;
+      lastDate = e.date;
+    }
+    html += txCardHtml(e);
+  });
+  card.innerHTML = html;
+
+  const back = askQuickReply([{ label: "Back to menu", value: "ok", icon: "ph-arrow-left" }]);
+  // askQuickReply scrolls to the bottom; jump back to the top so the newest transactions are visible first
+  chatLog.scrollTop = Math.max(0, card.getBoundingClientRect().top - chatLog.getBoundingClientRect().top + chatLog.scrollTop - 12);
+  await back;
+}
+
+async function viewBalances(){
+  const card = newBotCard("ph-users");
+  if(data.debtors.length === 0 && data.creditors.length === 0){
+    card.innerHTML = `<p class="text-slate-800 text-[13.5px]">No debtors or creditors on record yet.</p>`;
+    scrollBottom();
+    return;
+  }
+  let html = "";
+  if(data.debtors.length){
+    html += `<p class="text-[13px] font-semibold text-slate-800 mb-1.5">Debtors (owe you)</p>
+      <div class="overflow-x-auto -mx-1 mb-3"><table class="w-full text-[11px] font-mono border-collapse">
+      <thead><tr><th class="${TABLE_TH}">Name</th><th class="${TABLE_TH} text-right">Balance</th></tr></thead><tbody>`;
+    data.debtors.forEach(d => { html += `<tr><td class="${TABLE_TD}">${d.name}</td><td class="${TABLE_TD} text-right text-emerald-600">${data.currency}${fmt(d.balance)}</td></tr>`; });
+    html += `</tbody></table></div>`;
+  }
+  if(data.creditors.length){
+    html += `<p class="text-[13px] font-semibold text-slate-800 mb-1.5">Creditors (you owe)</p>
+      <div class="overflow-x-auto -mx-1"><table class="w-full text-[11px] font-mono border-collapse">
+      <thead><tr><th class="${TABLE_TH}">Name</th><th class="${TABLE_TH} text-right">Balance</th></tr></thead><tbody>`;
+    data.creditors.forEach(c => { html += `<tr><td class="${TABLE_TD}">${c.name}</td><td class="${TABLE_TD} text-right text-rose-600">${data.currency}${fmt(c.balance)}</td></tr>`; });
+    html += `</tbody></table></div>`;
+  }
+  card.innerHTML = html;
+  scrollBottom();
+  await askQuickReply([{ label: "Back to menu", value: "ok", icon: "ph-arrow-left" }]);
+}
+
+/* ================= MAIN LOOP ================= */
+async function exportCSVFlow(){
+  if(ledger.length === 0){
+    await botSay("Nothing to export yet.", { icon: "ph-download" });
+    return;
+  }
+  await botSay("Download the CSV, or send it straight from here?", { icon: "ph-download" });
+  const choice = await askQuickReply([
+    { label: "Download file", value: "download", icon: "ph-download" },
+    { label: "Send / Share", value: "send", icon: "ph-share-network" }
+  ]);
+  const csv = buildCSV();
+  if(choice === "download"){
+    const method = await exportCSV();
+    await botSay(method === "share" ? "Choose where to save it from the share sheet." : "CSV downloaded.", { icon: "ph-check-circle" });
+    return;
+  }
+  const shared = await shareCSV(csv);
+  if(shared){
+    await botSay("Sent.", { icon: "ph-check-circle" });
+  } else {
+    downloadCSV(csv);
+    openEmailDraft();
+    await botSay("This browser can't attach files directly, so I downloaded the CSV and opened an email draft — just attach the file that was downloaded.", { icon: "ph-info" });
+  }
+}
+
+async function receivedRequestFlow(){
+  if(receivedLedger.length === 0){
+    await botSay("No received requests yet.", { icon: "ph-download" });
+    return;
+  }
+}
+
+async function printBillFlow(){
+  const saleEntries = ledger.filter(e => e.type === "income" && e.taxableAmount !== undefined);
+  if(saleEntries.length === 0){
+    await botSay("No sales with GST details yet — create one via the Sale option first.", { icon: "ph-printer" });
+    return;
+  }
+  await botSay("Which sale would you like to print a bill for?", { icon: "ph-printer" });
+  const recent = saleEntries.slice().reverse().slice(0, 20);
+  const opts = recent.map(e => ({
+    label: `${e.date} · ${e.party || e.account} · ${data.currency}${fmt(e.amount)}`,
+    value: String(ledger.indexOf(e)),
+    icon: "ph-receipt"
+  }));
+  const idxStr = await askQuickReply(opts);
+  const entry = ledger[parseInt(idxStr, 10)];
+  const shop = await getShopDetails();
+  let party = entry.party ? data.debtors.find(d => d.name === entry.party) : null;
+  if(party) await ensurePartyDetails(party, "sale");
+  else party = { name: entry.party || "Walk-in Customer" };
+  generateBill(entry, "sale", shop, party);
+  await botSay("Bill sent to print.", { icon: "ph-check-circle" });
+}
+
+function dateMenuOption(){
+  const active = workingDate && workingDate !== todayISO();
+  return active
+    ? { label: "Reset Date", value: "date", icon: "ph-calendar-x", hint: workingDate }
+    : { label: "Set Date", value: "date", icon: "ph-calendar", hint: "Today" };
+}
+
+async function dateFlow(){
+  if(workingDate && workingDate !== todayISO()){
+    workingDate = null;
+    updateDateBanner();
+    await botSay(`Date reset to today (${todayISO()}).`, { icon: "ph-calendar-check" });
+    return;
+  }
+  await botSay("Pick a date. New transactions will use this date until you change or reset it.", { icon: "ph-calendar" });
+  const val = await askText("Choose a date", { required: true, dateInput: true });
+  workingDate = val || null;
+  updateDateBanner();
+  if(workingDate && workingDate !== todayISO()){
+    await botSay(`Date set to ${workingDate}. New transactions will be logged on this date — tap "Reset Date" in the menu anytime to go back to today.`, { icon: "ph-calendar-check" });
+  } else {
+    await botSay(`That's today's date — nothing to change.`, { icon: "ph-calendar-check" });
+  }
+}
+
+async function mainMenu(){
+  try{
+    await botSay("What would you like to record?", { icon: "ph-lightning" });
+    const choice = await askQuickReply([
+      { label: "Log Income", value: "income", variant: "income", icon: "ph-arrow-circle-down-right", hint: "+ Credit" },
+      { label: "Log Expense", value: "expense", variant: "expense", icon: "ph-arrow-circle-up-right", hint: "- Debit" },
+      { label: "Received", value: "received", variant: "income", icon: "ph-hand-coins", hint: "From debtor" },
+      { label: "Paid", value: "paid", variant: "expense", icon: "ph-paper-plane-tilt", hint: "To creditor" },
+      { label: "Sale", value: "sale", variant: "income", icon: "ph-receipt", hint: "Cash/Credit + GST" },
+      { label: "Purchase", value: "purchase", variant: "expense", icon: "ph-shopping-bag", hint: "Cash/Credit + GST" },
+      { label: "Print Bill", value: "printbill", icon: "ph-printer", hint: "From past sale" },
+      dateMenuOption(),
+      { label: "View", value: "view", icon: "ph-book-open", hint: "Ledger & balances" },
+      { label: "Export CSV", value: "export", icon: "ph-download", hint: "Download file" },
+      { label: "Received Request", value: "received-request", icon: "ph-download", hint: "View received requests" }
+    ], "grid");
+
+    if(choice === "income") await logIncomeFlow();
+    else if(choice === "expense") await logExpenseFlow();
+    else if(choice === "received") await receivedFlow();
+    else if(choice === "paid") await paidFlow();
+    else if(choice === "sale") await saleFlow();
+    else if(choice === "purchase") await purchaseFlow();
+    else if(choice === "date") await dateFlow();
+    else if(choice === "printbill") await printBillFlow();
+    else if(choice === "view") await viewMenu();
+    else if(choice === "export") await exportCSVFlow();
+    else if(choice === "received-request") await receivedRequestFlow();
+  }catch(err){
+    if(err instanceof CancelFlow){
+      await botSay("Cancelled — nothing was saved. Back to the main menu.", { icon: "ph-x-circle" });
+    } else {
+      console.error(err);
+      await botSay("Something interrupted that — back to the main menu.", { icon: "ph-warning" });
+    }
+  }
+
+  mainMenu();
+}
+
+/* ================= PAGE NAVIGATION ================= */
+let currentPage = "chat";
+let manageSection = "debtors";
+
+function buildPlaceholder(container, icon, title, message){
+  container.innerHTML = `<div class="flex flex-col items-center justify-center text-center py-20 px-8 h-full">
+    <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+      <i class="ph-bold ${icon} text-3xl text-slate-400"></i>
+    </div>
+    <h2 class="text-base font-bold text-slate-700 mb-1">${title}</h2>
+    <p class="text-sm text-slate-500 max-w-xs leading-relaxed">${message}</p>
+    <span class="mt-4 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px] font-semibold">
+      <i class="ph-bold ph-clock text-xs"></i> Coming soon
+    </span>
+  </div>`;
+}
+
+function showPage(page){
+  currentPage = page;
+  ["chatPage","managePage","profilePage","settingsPage"].forEach(id=>{
+    document.getElementById(id).classList.toggle("hidden", id !== page + "Page");
+  });
+  document.querySelectorAll(".nav-tab").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.page === page);
+  });
+  if(page === "manage") renderManageSection();
+  if(page === "profile") buildProfilePage();
+  if(page === "settings") buildSettingsPage();
+  if(page === "chat") scrollBottom();
+}
+
+document.querySelectorAll(".nav-tab").forEach(btn=>{
+  btn.onclick = ()=> showPage(btn.dataset.page);
+});
+
+/* ================= SPLASH & PIN LOCK SCREEN ================= */
+const splashScreen = document.getElementById("splashScreen");
+const lockScreen = document.getElementById("lockScreen");
+const lockIcon = document.getElementById("lockIcon");
+const lockTitle = document.getElementById("lockTitle");
+const lockSubtitle = document.getElementById("lockSubtitle");
+const pinDots = document.getElementById("pinDots");
+const pinMessage = document.getElementById("pinMessage");
+const pinKeypad = document.getElementById("pinKeypad");
+const lockFooterLink = document.getElementById("lockFooterLink");
+
+let pinBuffer = "";
+let pinMode = null; // "setup1" | "setup2" | "unlock"
+let firstPinEntry = "";
+
+function renderPinDots(){
+  pinDots.innerHTML = "";
+  for(let i = 0; i < 4; i++){
+    const dot = document.createElement("div");
+    dot.className = `w-3.5 h-3.5 rounded-full border-2 ${i < pinBuffer.length ? "bg-blue-600 border-blue-600" : "border-slate-300"}`;
+    pinDots.appendChild(dot);
+  }
+}
+
+function shakePinDots(){
+  let n = 0;
+  const iv = setInterval(()=>{
+    pinDots.style.transform = n % 2 === 0 ? "translateX(-6px)" : "translateX(6px)";
+    n++;
+    if(n > 5){ clearInterval(iv); pinDots.style.transform = "translateX(0)"; }
+  }, 40);
+}
+
+function buildKeypad(){
+  pinKeypad.innerHTML = "";
+  const keys = ["1","2","3","4","5","6","7","8","9","","0","back"];
+  keys.forEach(k=>{
+    const btn = document.createElement("button");
+    btn.type = "button";
+    if(k === ""){
+      btn.className = "invisible";
+      btn.disabled = true;
+    } else if(k === "back"){
+      btn.className = "h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 transition flex items-center justify-center text-slate-600";
+      btn.innerHTML = `<i class="ph-bold ph-backspace text-lg"></i>`;
+      btn.onclick = ()=>{ pinBuffer = pinBuffer.slice(0, -1); renderPinDots(); pinMessage.textContent = ""; };
+    } else {
+      btn.className = "h-14 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 active:scale-95 transition text-lg font-semibold text-slate-800 shadow-fintech-sm";
+      btn.textContent = k;
+      btn.onclick = ()=> onPinDigit(k);
+    }
+    pinKeypad.appendChild(btn);
+  });
+}
+
+function onPinDigit(d){
+  if(pinBuffer.length >= 4) return;
+  pinBuffer += d;
+  renderPinDots();
+  if(pinBuffer.length === 4) setTimeout(handlePinComplete, 120);
+}
+
+function handlePinComplete(){
+  if(pinMode === "setup1"){
+    firstPinEntry = pinBuffer;
+    pinBuffer = "";
+    renderPinDots();
+    pinMode = "setup2";
+    lockTitle.textContent = "Confirm your PIN";
+    pinMessage.textContent = "";
+  } else if(pinMode === "setup2"){
+    if(pinBuffer === firstPinEntry){
+      setPin(pinBuffer);
+      unlockApp();
+    } else {
+      pinMessage.textContent = "PINs didn't match — try again.";
+      shakePinDots();
+      pinBuffer = ""; firstPinEntry = ""; pinMode = "setup1";
+      lockTitle.textContent = "Create a PIN";
+      renderPinDots();
+    }
+  } else if(pinMode === "unlock"){
+    if(simpleHash(pinBuffer) === getPinHash()){
+      unlockApp();
+    } else {
+      pinMessage.textContent = "Incorrect PIN — try again.";
+      shakePinDots();
+      pinBuffer = "";
+      renderPinDots();
+    }
+  }
+}
+
+function startPinSetup(){
+  pinMode = "setup1";
+  pinBuffer = ""; firstPinEntry = "";
+  lockIcon.className = "ph-bold ph-lock-key text-2xl text-white";
+  lockTitle.textContent = "Create a PIN";
+  lockSubtitle.textContent = "Adds a quick lock screen on this device. It doesn't encrypt your data — it only gates the app screen.";
+  pinMessage.textContent = "";
+  renderPinDots();
+  lockFooterLink.innerHTML = `<button type="button" id="cancelPinBtn" class="text-[12.5px] font-semibold text-slate-500 hover:text-slate-700">Cancel</button>`;
+  document.getElementById("cancelPinBtn").onclick = ()=>{ lockScreen.style.display = "none"; };
+}
+
+function startPinUnlock(){
+  pinMode = "unlock";
+  pinBuffer = "";
+  lockIcon.className = "ph-bold ph-lock-key text-2xl text-white";
+  lockTitle.textContent = "Enter your PIN";
+  lockSubtitle.textContent = "Your ledger is locked on this device.";
+  pinMessage.textContent = "";
+  renderPinDots();
+  lockFooterLink.innerHTML = `<button type="button" id="forgotPinBtn" class="text-[12.5px] font-semibold text-slate-500 hover:text-rose-600">Forgot PIN? Sign out</button>`;
+  document.getElementById("forgotPinBtn").onclick = ()=>{
+    if(confirm("Sign out and remove the PIN on this device? Your saved data is not deleted — just sign in with Google again.")){
+      clearPin();
+      Panel.auth.logout().always(()=> location.reload());
+    }
+  };
+}
+
+function unlockApp(){
+  lockScreen.style.display = "none";
+  if(currentPage === "settings") buildSettingsPage();
+}
+
+function showLockScreen(){
+  buildKeypad();
+  startPinUnlock();
+  lockScreen.style.display = "flex";
+}
+
+/* ---- Settings page: real App Lock management + coming-soon note ---- */
+function buildBusinessProfileCard(container){
+  const card = document.createElement("div");
+  card.className = "bg-white border border-slate-200 rounded-xl p-3 shadow-fintech-sm";
+  card.innerHTML = `
+    <div class="flex items-center gap-2 mb-2">
+      <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0"><i class="ph-bold ph-storefront text-slate-600"></i></div>
+      <div class="text-sm font-semibold text-slate-800">Business Profile</div>
+    </div>
+    <div class="space-y-2">
+      <input id="bp-name" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="Business / shop name" value="${data.shop.name || ""}">
+      <input id="bp-address" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="Address" value="${data.shop.address || ""}">
+      <input id="bp-state" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="State" value="${data.shop.state || ""}">
+      <input id="bp-gst" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="GSTIN" value="${data.shop.gstNumber || ""}">
+    </div>
+    <button type="button" id="bp-save" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg py-2">Save business profile</button>
+    <p id="bp-msg" class="text-[11px] text-emerald-600 font-semibold mt-1.5 h-3"></p>
+    <p class="text-[10.5px] text-slate-400 mt-1 leading-relaxed">Your business state is compared against each customer/supplier's state to decide CGST+SGST vs IGST on GST bills.</p>`;
+  card.querySelector("#bp-save").onclick = ()=>{
+    data.shop = {
+      name: card.querySelector("#bp-name").value.trim(),
+      address: card.querySelector("#bp-address").value.trim(),
+      state: card.querySelector("#bp-state").value.trim(),
+      gstNumber: card.querySelector("#bp-gst").value.trim()
+    };
+    saveData();
+    const msg = card.querySelector("#bp-msg");
+    msg.textContent = "Saved.";
+    setTimeout(()=>{ if(msg) msg.textContent = ""; }, 1800);
+  };
+  container.appendChild(card);
+}
+
+function buildInvoiceNumberingCard(container){
+  const card = document.createElement("div");
+  card.className = "bg-white border border-slate-200 rounded-xl p-3 shadow-fintech-sm";
+  const currentFormat = data.invoiceFormat || "INV-[INDEX]";
+  card.innerHTML = `
+    <div class="flex items-center gap-2 mb-2">
+      <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0"><i class="ph-bold ph-hash text-slate-600"></i></div>
+      <div class="text-sm font-semibold text-slate-800">Invoice Numbering</div>
+    </div>
+    <div class="space-y-2">
+      <div>
+        <label class="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide">Format — use [INDEX] as the number placeholder</label>
+        <input id="inv-format" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-mono mt-1 focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="e.g. AMB/2025-26/[INDEX]" value="${currentFormat}">
+      </div>
+      <div>
+        <label class="text-[10.5px] font-semibold text-slate-500 uppercase tracking-wide">Next invoice number</label>
+        <input id="inv-start" type="number" min="1" step="1" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-mono mt-1 focus:outline-none focus:ring-2 focus:ring-fintech-blue" value="${data.billCounter}">
+      </div>
+    </div>
+    <p class="text-[11px] text-slate-500 mt-2">Preview: <span id="inv-preview" class="font-mono font-semibold text-slate-700"></span></p>
+    <button type="button" id="inv-save" class="mt-2 w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg py-2">Save numbering</button>
+    <p id="inv-msg" class="text-[11px] text-emerald-600 font-semibold mt-1.5 h-3"></p>`;
+  function updatePreview(){
+    const fmtStr = card.querySelector("#inv-format").value.trim() || "INV-[INDEX]";
+    const num = parseInt(card.querySelector("#inv-start").value, 10) || 1;
+    const padded = String(num).padStart(3, "0");
+    card.querySelector("#inv-preview").textContent = fmtStr.includes("[INDEX]") ? fmtStr.replace("[INDEX]", padded) : fmtStr + padded;
+  }
+  card.querySelector("#inv-format").addEventListener("input", updatePreview);
+  card.querySelector("#inv-start").addEventListener("input", updatePreview);
+  updatePreview();
+  card.querySelector("#inv-save").onclick = ()=>{
+    data.invoiceFormat = card.querySelector("#inv-format").value.trim() || "INV-[INDEX]";
+    data.billCounter = parseInt(card.querySelector("#inv-start").value, 10) || 1;
+    saveData();
+    const msg = card.querySelector("#inv-msg");
+    msg.textContent = "Saved — the next bill will use this.";
+    setTimeout(()=>{ if(msg) msg.textContent = ""; }, 2200);
+  };
+  container.appendChild(card);
+}
+
+function buildGstRatesCard(container){
+  const card = document.createElement("div");
+  card.className = "bg-white border border-slate-200 rounded-xl p-3 shadow-fintech-sm";
+  card.innerHTML = `
+    <div class="flex items-center gap-2 mb-2">
+      <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0"><i class="ph-bold ph-percent text-slate-600"></i></div>
+      <div class="text-sm font-semibold text-slate-800">GST Rates</div>
+    </div>
+    <p class="text-[10.5px] text-slate-500 mb-2">Shown as quick-pick options on Credit Sale / Credit Purchase.</p>
+    <div class="chips flex flex-wrap gap-1.5 mb-2"></div>
+    <div class="flex gap-1.5">
+      <input class="new-rate flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-fintech-blue" type="number" min="0" max="100" step="any" placeholder="e.g. 18">
+      <button type="button" class="add-rate bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg px-3">Add</button>
+    </div>`;
+  const chipsEl = card.querySelector(".chips");
+  function renderChips(){
+    chipsEl.innerHTML = "";
+    if(!Array.isArray(data.gstRates)) data.gstRates = [];
+    data.gstRates.forEach((rate, i)=>{
+      const chip = document.createElement("span");
+      chip.className = "inline-flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-full pl-3 pr-1.5 py-1 text-xs font-mono font-medium text-slate-700";
+      chip.innerHTML = `${rate}% <button type="button" class="ml-0.5 h-4 w-4 flex items-center justify-center rounded-full hover:bg-rose-100 hover:text-rose-600"><i class="ph-bold ph-x text-[10px]"></i></button>`;
+      chip.querySelector("button").onclick = ()=>{
+        data.gstRates.splice(i, 1);
+        saveData();
+        renderChips();
+      };
+      chipsEl.appendChild(chip);
+    });
+    if(data.gstRates.length === 0){
+      const empty = document.createElement("span");
+      empty.className = "text-xs text-slate-400 italic";
+      empty.textContent = "No rates yet — add one below.";
+      chipsEl.appendChild(empty);
+    }
+  }
+  renderChips();
+  card.querySelector(".add-rate").onclick = ()=>{
+    const input = card.querySelector(".new-rate");
+    const val = parseFloat(input.value);
+    if(!isNaN(val) && val >= 0 && val <= 100 && !data.gstRates.includes(val)){
+      data.gstRates.push(val);
+      data.gstRates.sort((a,b)=>a-b);
+      saveData();
+      input.value = "";
+      renderChips();
+    }
+  };
+  container.appendChild(card);
+}
+
+function buildSettingsPage(){
+  const el = document.getElementById("settingsPage");
+  el.innerHTML = "";
+  const wrap = document.createElement("div");
+  wrap.className = "p-3 space-y-2.5";
+
+  buildBusinessProfileCard(wrap);
+  buildInvoiceNumberingCard(wrap);
+  buildGstRatesCard(wrap);
+
+  const lockCard = document.createElement("div");
+  lockCard.className = "bg-white border border-slate-200 rounded-xl p-3 shadow-fintech-sm";
+  function renderLockCard(){
+    const on = hasPinSet();
+    lockCard.innerHTML = `
+      <div class="flex items-center gap-2 mb-1">
+        <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0"><i class="ph-bold ph-lock-key text-slate-600"></i></div>
+        <div class="min-w-0">
+          <div class="text-sm font-semibold text-slate-800">App Lock (PIN)</div>
+          <div class="text-[11px] text-slate-500">${on ? "Enabled on this device" : "Not set on this device"}</div>
+        </div>
+      </div>
+      <div class="flex gap-2 mt-2">
+        ${on
+          ? `<button type="button" id="changePinBtn" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg py-2">Change PIN</button>
+             <button type="button" id="removePinBtn" class="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold rounded-lg py-2">Remove PIN</button>`
+          : `<button type="button" id="addPinBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg py-2">Set up a PIN</button>`
+        }
+      </div>
+      <p class="text-[10.5px] text-slate-400 mt-2 leading-relaxed">A PIN only locks this app's screen — it does not encrypt your data.</p>`;
+    if(on){
+      lockCard.querySelector("#changePinBtn").onclick = ()=>{
+        buildKeypad();
+        startPinSetup();
+        lockScreen.style.display = "flex";
+      };
+      lockCard.querySelector("#removePinBtn").onclick = ()=>{
+        if(confirm("Remove the PIN lock from this device?")){
+          clearPin();
+          renderLockCard();
+        }
+      };
+    } else {
+      lockCard.querySelector("#addPinBtn").onclick = ()=>{
+        buildKeypad();
+        startPinSetup();
+        lockScreen.style.display = "flex";
+      };
+    }
+  }
+  renderLockCard();
+  wrap.appendChild(lockCard);
+
+  const more = document.createElement("div");
+  buildPlaceholder(more, "ph-gear-six", "More settings", "Currency symbol, backups, and theme options are coming soon.");
+  wrap.appendChild(more);
+
+  el.appendChild(wrap);
+}
+
+/* ---- Manage page: Debtors / Creditors / Categories / Accounts ---- */
+document.querySelectorAll(".manage-tab").forEach(btn=>{
+  btn.onclick = ()=>{ manageSection = btn.dataset.section; renderManageSection(); };
+});
+
+function renderManageSection(){
+  document.querySelectorAll(".manage-tab").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.section === manageSection);
+  });
+  const el = document.getElementById("manageContent");
+  el.innerHTML = "";
+  if(manageSection === "debtors") renderPartyList(el, data.debtors, "debtor");
+  else if(manageSection === "creditors") renderPartyList(el, data.creditors, "creditor");
+  else if(manageSection === "categories") renderCategoriesManager(el);
+  else if(manageSection === "accounts") renderAccountsManager(el);
+}
+
+function renderPartyList(container, list, roleLabel){
+  const header = document.createElement("div");
+  header.className = "flex items-center justify-between mb-1";
+  header.innerHTML = `<span class="text-xs font-semibold text-slate-500 uppercase tracking-wide">${list.length} ${roleLabel}${list.length === 1 ? "" : "s"}</span>`;
+  const addBtn = document.createElement("button");
+  addBtn.type = "button";
+  addBtn.className = "px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1";
+  addBtn.innerHTML = `<i class="ph-bold ph-plus text-xs"></i> Add ${roleLabel}`;
+  addBtn.onclick = ()=> openPartyForm(list, roleLabel, null);
+  header.appendChild(addBtn);
+  container.appendChild(header);
+
+  if(list.length === 0){
+    const empty = document.createElement("p");
+    empty.className = "text-xs text-slate-400 italic py-6 text-center";
+    empty.textContent = `No ${roleLabel}s yet.`;
+    container.appendChild(empty);
+    return;
+  }
+
+  list.forEach((p, i)=>{
+    const card = document.createElement("div");
+    card.className = "bg-white border border-slate-200 rounded-xl p-3 shadow-fintech-sm";
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+          <div class="font-semibold text-sm text-slate-800 truncate">${p.name}</div>
+          <div class="text-xs font-mono ${p.balance >= 0 ? "text-emerald-600" : "text-rose-600"} mt-0.5">
+            ${data.currency}${fmt(Math.abs(p.balance))} ${p.balance >= 0 ? (roleLabel === "debtor" ? "owed to you" : "you owe") : "credit balance"}
+          </div>
+          ${p.state ? `<div class="text-[11px] text-slate-500 mt-1">${p.state}${p.address ? " · " + p.address : ""}</div>` : (p.address ? `<div class="text-[11px] text-slate-500 mt-1">${p.address}</div>` : "")}
+          ${p.gstNumber ? `<div class="text-[11px] text-slate-500">GSTIN: ${p.gstNumber}</div>` : ""}
+        </div>
+        <div class="flex gap-1 flex-shrink-0">
+          <button class="edit-btn h-7 w-7 flex items-center justify-center rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600"><i class="ph-bold ph-pencil-simple text-xs"></i></button>
+          <button class="del-btn h-7 w-7 flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600"><i class="ph-bold ph-trash text-xs"></i></button>
+        </div>
+      </div>`;
+    card.querySelector(".edit-btn").onclick = ()=> openPartyForm(list, roleLabel, i);
+    card.querySelector(".del-btn").onclick = ()=>{
+      if(confirm(`Remove ${p.name}? Past ledger entries are unaffected.`)){
+        list.splice(i, 1);
+        saveData();
+        renderManageSection();
+      }
+    };
+    container.appendChild(card);
+  });
+}
+
+function openPartyForm(list, roleLabel, index){
+  const isNew = index === null;
+  const existing = isNew ? { name: "", balance: 0, state: "", address: "", gstNumber: "" } : list[index];
+  const el = document.getElementById("manageContent");
+  const form = document.createElement("div");
+  form.className = "bg-white border-2 border-blue-200 rounded-xl p-3 shadow-md space-y-2";
+  form.innerHTML = `
+    <div class="text-xs font-bold text-blue-700 uppercase tracking-wide">${isNew ? "New" : "Edit"} ${roleLabel}</div>
+    <input class="f-name w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="Name" value="${existing.name || ""}">
+    <input class="f-balance w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-fintech-blue" type="number" step="any" placeholder="Opening balance" value="${existing.balance || 0}">
+    <input class="f-state w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="State (for CGST/SGST vs IGST)" value="${existing.state || ""}">
+    <input class="f-address w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="Address (optional)" value="${existing.address || ""}">
+    <input class="f-gst w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="GSTIN (optional)" value="${existing.gstNumber || ""}">
+    <div class="flex gap-2 pt-1">
+      <button type="button" class="save-btn flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg py-2">Save</button>
+      <button type="button" class="cancel-btn flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg py-2">Cancel</button>
+    </div>`;
+  el.insertBefore(form, el.children[1] || null);
+  form.querySelector(".save-btn").onclick = ()=>{
+    const name = form.querySelector(".f-name").value.trim();
+    if(!name){ alert("Name is required."); return; }
+    const balance = parseFloat(form.querySelector(".f-balance").value) || 0;
+    const state = form.querySelector(".f-state").value.trim();
+    const address = form.querySelector(".f-address").value.trim();
+    const gstNumber = form.querySelector(".f-gst").value.trim();
+    if(isNew) list.push({ name, balance, state, address, gstNumber });
+    else Object.assign(list[index], { name, balance, state, address, gstNumber });
+    saveData();
+    if(currentPage === "chat") updateSummary();
+    renderManageSection();
+  };
+  form.querySelector(".cancel-btn").onclick = ()=> renderManageSection();
+}
+
+function renderCategoriesManager(el){
+  ["income","expense"].forEach(type=>{
+    const wrap = document.createElement("div");
+    wrap.className = "bg-white border border-slate-200 rounded-xl p-3 shadow-fintech-sm";
+    wrap.innerHTML = `
+      <div class="text-xs font-bold uppercase tracking-wide ${type === "income" ? "text-emerald-600" : "text-rose-600"} mb-2">${type === "income" ? "Income categories" : "Expense categories"}</div>
+      <div class="chips flex flex-wrap gap-1.5 mb-2"></div>
+      <div class="flex gap-1.5">
+        <input class="new-cat flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="New category">
+        <button type="button" class="add-cat bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg px-3">Add</button>
+      </div>`;
+    const chipsEl = wrap.querySelector(".chips");
+    function renderChips(){
+      chipsEl.innerHTML = "";
+      data.categories[type].forEach((cat, i)=>{
+        const chip = document.createElement("span");
+        chip.className = "inline-flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-full pl-3 pr-1.5 py-1 text-xs font-medium text-slate-700";
+        chip.innerHTML = `${cat} <button type="button" class="ml-0.5 h-4 w-4 flex items-center justify-center rounded-full hover:bg-rose-100 hover:text-rose-600"><i class="ph-bold ph-x text-[10px]"></i></button>`;
+        chip.querySelector("button").onclick = ()=>{
+          data.categories[type].splice(i, 1);
+          saveData();
+          renderChips();
+        };
+        chipsEl.appendChild(chip);
+      });
+    }
+    renderChips();
+    wrap.querySelector(".add-cat").onclick = ()=>{
+      const input = wrap.querySelector(".new-cat");
+      const val = input.value.trim();
+      if(val && !data.categories[type].includes(val)){
+        data.categories[type].push(val);
+        saveData();
+        input.value = "";
+        renderChips();
+      }
+    };
+    el.appendChild(wrap);
+  });
+}
+
+function renderAccountsManager(el){
+  const wrap = document.createElement("div");
+  wrap.className = "bg-white border border-slate-200 rounded-xl p-3 shadow-fintech-sm";
+  wrap.innerHTML = `
+    <div class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Payment accounts</div>
+    <div class="chips flex flex-wrap gap-1.5 mb-2"></div>
+    <div class="flex gap-1.5">
+      <input class="new-acc flex-1 border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-fintech-blue" placeholder="New account (e.g. Bank)">
+      <button type="button" class="add-acc bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg px-3">Add</button>
+    </div>`;
+  const chipsEl = wrap.querySelector(".chips");
+  function renderChips(){
+    chipsEl.innerHTML = "";
+    data.accounts.forEach((acc, i)=>{
+      const chip = document.createElement("span");
+      chip.className = "inline-flex items-center gap-1 bg-slate-100 border border-slate-200 rounded-full pl-3 pr-1.5 py-1 text-xs font-medium text-slate-700";
+      chip.innerHTML = `${acc} <button type="button" class="ml-0.5 h-4 w-4 flex items-center justify-center rounded-full hover:bg-rose-100 hover:text-rose-600"><i class="ph-bold ph-x text-[10px]"></i></button>`;
+      chip.querySelector("button").onclick = ()=>{
+        data.accounts.splice(i, 1);
+        saveData();
+        renderChips();
+      };
+      chipsEl.appendChild(chip);
+    });
+  }
+  renderChips();
+  wrap.querySelector(".add-acc").onclick = ()=>{
+    const input = wrap.querySelector(".new-acc");
+    const val = input.value.trim();
+    if(val && !data.accounts.includes(val)){
+      data.accounts.push(val);
+      saveData();
+      input.value = "";
+      renderChips();
+    }
+  };
+  el.appendChild(wrap);
+}
+
+/* ================= PROFILE PAGE (details from the Google login) ================= */
+function esc(v){
+  return String(v == null ? "" : v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+function initials(name){
+  return (name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(function(w){ return w[0].toUpperCase(); }).join("") || "?";
+}
+function fmtDateTime(iso){
+  if(!iso) return "—";
+  var d = new Date(iso);
+  return isNaN(d.getTime()) ? "—" : d.toLocaleString();
+}
+
+function buildProfilePage(){
+  var u = Panel.user || {};
+  var avatar = u.picture
+    ? '<img src="' + esc(u.picture) + '" alt="" referrerpolicy="no-referrer" class="w-20 h-20 rounded-full object-cover border-2 border-white shadow-md">'
+    : '<div class="w-20 h-20 rounded-full bg-corporate-navy text-white flex items-center justify-center text-2xl font-bold shadow-md border-2 border-white">' + esc(initials(u.name)) + '</div>';
+
+  var rows = [
+    ["Name", u.name],
+    ["Email", u.email],
+    ["Sign-in method", "Google"],
+    ["Account ID", u.id],
+    ["Last sign-in", fmtDateTime(u.lastSignInAt)],
+    ["Member since", fmtDateTime(u.createdAt)],
+    ["Data storage", Panel.label]
+  ];
+  var rowsHtml = rows.map(function(r){
+    return '<div class="flex items-start justify-between gap-3 py-2 border-b border-slate-100 last:border-0">'
+      + '<span class="text-[11.5px] text-slate-500 flex-shrink-0">' + esc(r[0]) + '</span>'
+      + '<span class="text-[12px] font-medium text-slate-800 text-right break-all">' + esc(r[1] || "—") + '</span></div>';
+  }).join("");
+
+  var html = ''
+    + '<div class="p-3 space-y-2.5">'
+    +   '<div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-fintech-sm flex flex-col items-center text-center">'
+    +     avatar
+    +     '<div class="mt-3 text-base font-bold text-slate-800">' + esc(u.name || "Signed-in user") + '</div>'
+    +     '<div class="text-[12.5px] text-slate-500 break-all">' + esc(u.email || "") + '</div>'
+    +     '<div class="mt-2 flex items-center gap-1.5 flex-wrap justify-center">'
+    +       '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600 text-[10.5px] font-semibold"><i class="ph-bold ph-google-logo text-[11px]"></i> Google account</span>'
+    +       (u.emailVerified ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10.5px] font-semibold"><i class="ph-bold ph-seal-check text-[11px]"></i> Verified</span>' : '')
+    +       (Panel.isDemo ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10.5px] font-semibold">Demo account</span>' : '')
+    +     '</div>'
+    +   '</div>'
+    +   '<div class="bg-white border border-slate-200 rounded-xl px-3.5 py-1.5 shadow-fintech-sm">' + rowsHtml + '</div>'
+    +   '<div class="bg-white border border-slate-200 rounded-xl p-3 shadow-fintech-sm">'
+    +     '<div class="flex items-center gap-2 mb-2.5">'
+    +       '<div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0"><i class="ph-bold ph-crown-simple text-amber-600"></i></div>'
+    +       '<div><div class="text-sm font-semibold text-slate-800">Subscription</div><div class="text-[11px] text-slate-500">Current plan: Free</div></div>'
+    +     '</div>'
+    +     '<button type="button" id="btnSubscribe" disabled class="w-full bg-slate-100 text-slate-500 text-xs font-semibold rounded-lg py-2.5 flex items-center justify-center gap-2 cursor-not-allowed">'
+    +       'Subscribe <span class="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold">Coming soon</span>'
+    +     '</button>'
+    +   '</div>'
+    +   '<button type="button" id="btnSignOut" class="w-full bg-white hover:bg-rose-50 border border-rose-200 text-rose-600 text-xs font-semibold rounded-xl py-2.5 flex items-center justify-center gap-2">'
+    +     '<i class="ph-bold ph-sign-out text-sm"></i> Sign out'
+    +   '</button>'
+    + '</div>';
+
+  $("#profilePage").html(html);
+  $("#btnSignOut").on("click", function(){
+    if(confirm("Sign out of this device?")){
+      Panel.auth.logout().always(function(){ location.reload(); });
+    }
+  });
+}
+
+/* ================= SYNC STATUS (header) ================= */
+var syncTimer = null;
+function setSync(state){
+  var text = Panel.isDemo ? "Demo mode · dummy data" : "Synced to your account";
+  var color = "#34d399";
+  if(state === "saving"){ text = "Saving…"; color = "#fbbf24"; }
+  else if(state === "saved"){ text = "Saved ✓"; }
+  else if(state === "error"){ text = "Couldn't save — will retry on next change"; color = "#f87171"; }
+  $("#syncText").text(text);
+  $("#syncDot, #syncPing").css("background", color);
+  clearTimeout(syncTimer);
+  if(state === "saved") syncTimer = setTimeout(function(){ setSync("idle"); }, 1600);
+}
+Panel.on("saving", function(){ setSync("saving"); })
+     .on("saved", function(){ setSync("saved"); })
+     .on("error", function(p){ if(p.write) setSync("error"); });
+
+/* ================= BOOT: splash -> Google sign-in -> load data -> app ================= */
+var appStarted = false;
+
+function hideSplash(done){
+  var $splash = $("#splashScreen");
+  $splash.css("opacity", "0");
+  setTimeout(function(){ $splash.hide(); if(done) done(); }, 300);
+}
+
+function setGoogleBusy(busy){
+  $("#btnGoogleLogin").prop("disabled", busy).css("opacity", busy ? 0.6 : 1);
+  $("#googleBtnText").text(busy ? "Signing in…" : "Continue with Google");
+}
+
+function showLogin(message){
+  $("#loginMessage").text(message || "");
+  $("#demoNotice").toggle(Panel.isDemo);
+  setGoogleBusy(false);
+  $("#loginScreen").css("display", "flex");
+}
+
+function enterApp(){
+  Panel.loadAll()
+    .done(function(res){
+      data = normalizeConfig(res.config);
+      ledger = res.ledger || [];
+      $("#loginScreen").hide();
+      startApp();
+    })
+    .fail(function(){
+      $("#loginScreen").css("display", "flex");
+      setGoogleBusy(false);
+      $("#demoNotice").toggle(Panel.isDemo);
+      $("#loginMessage").text("Couldn't load your data. Tap the button to retry.");
+    });
+}
+
+function startApp(){
+  if(appStarted) return;
+  appStarted = true;
+
+  $("#footerNote").text(Panel.isDemo ? "Demo mode • your data stays in this browser only" : "Your data is saved securely to your account");
+  setSync("idle");
+  presetButtons.forEach(function(b){ b.textContent = "+" + data.currency + b.dataset.amt; });
+  updateSummary();
+  updateDateBanner();
+  showPage("chat");
+
+  var u = Panel.user || {};
+  var first = u.givenName || (u.name ? u.name.split(/\s+/)[0] : "");
+  var card = newBotCard("ph-robot");
+  card.innerHTML = '<p class="font-medium text-slate-900 mb-0.5">' + (first ? "Welcome back, " + esc(first) : "Welcome to Chat Accountant") + '</p>'
+    + '<p class="text-slate-600 text-[13px]">Hi — I\'m your bookkeeping copilot. Tap an action below to record income, expenses, credit sales/purchases with GST, and keep your ledger up to date.</p>';
+  scrollBottom();
+  mainMenu();
+
+  if(hasPinSet()) showLockScreen();   // optional device lock, on top of Google sign-in
+}
+
+$("#btnGoogleLogin").on("click", function(){
+  debugger;
+  setGoogleBusy(true);
+  $("#loginMessage").text("");
+  var step = Panel.user ? $.Deferred().resolve(Panel.user).promise() : Panel.auth.loginWithGoogle();
+  step.done(function(){ enterApp(); })
+      .fail(function(){ setGoogleBusy(false); $("#loginMessage").text("Sign-in failed. Please try again."); });
+});
+
+$("#dateBannerReset").on("click", function(){ workingDate = null; updateDateBanner(); });
+$("#btnExport").on("click", exportCSV);
+$("#btnReset").on("click", function(){
+  var extra = Panel.isDemo ? " (this demo account will go back to a blank ledger)" : "";
+  if(confirm("This deletes all logged transactions, customers and settings" + extra + ". Continue?")){
+    Panel.resetAll()
+      .done(function(){ location.reload(); })
+      .fail(function(){ alert("Couldn't reset right now. Please try again."); });
+  }
+});
+
+$(function(){
+  var minSplash = $.Deferred();
+  setTimeout(function(){ minSplash.resolve(); }, 1100);
+  $.when(Panel.auth.session(), minSplash)
+    .done(function(user){
+      hideSplash(function(){ if(user) enterApp(); else showLogin(); });
+    })
+    .fail(function(){
+      hideSplash(function(){ showLogin("Couldn't check your sign-in. Please try again."); });
+    });
+});
+</script>
+</body>
+</html>
