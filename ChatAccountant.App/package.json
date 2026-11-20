@@ -1,0 +1,33 @@
+{
+  "name": "chat-accountant",
+  "version": "1.0.0",
+  "description": "Chat-style bookkeeping for small Indian businesses: income, expenses, GST sales/purchases, debtors and creditors.",
+  "main": "index.html",
+  "scripts": {
+    "start": "node scripts/serve.js",
+    "build:css": "tailwindcss -c tailwind.config.js -i css/tailwind.input.css -o css/tailwind.css --minify",
+    "watch:css": "tailwindcss -c tailwind.config.js -i css/tailwind.input.css -o css/tailwind.css --watch",
+    "build:images": "node scripts/build-images.js",
+    "vendor": "node scripts/copy-vendor.js",
+    "build": "npm run build:css && npm run build:images",
+    "test": "node tests/smoke.js",
+    "test:pdf": "node tests/pdf-browser.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@phosphor-icons/web": "^2.0.3",
+    "@sparticuz/chromium": "^153.0.0",
+    "@tailwindcss/container-queries": "^0.1.1",
+    "@tailwindcss/forms": "^0.5.11",
+    "html2canvas": "^1.4.1",
+    "jquery": "^3.7.1",
+    "jsdom": "^22.1.0",
+    "jspdf": "^2.5.1",
+    "puppeteer-core": "^25.17.0",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^3.4.17"
+  },
+  "private": true
+}

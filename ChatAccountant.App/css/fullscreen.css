@@ -1,0 +1,13 @@
+/* css/fullscreen.css — full-screen chat mode (slim header, hidden tabs/totals) */
+/* Full-screen chat: tabs, totals and header extras are hidden so the conversation gets the whole screen. */
+.chat-full #bottomNav, .chat-full #summarySection, .chat-full #footerNoteRow,
+.chat-full #hdrSync, .chat-full #hdrActions, .chat-full #hdrPro{ display:none !important; }
+.chat-full #hdrInner{ padding-top:0; padding-bottom:3px; }
+.chat-full #hdrLogo{ width:20px; height:20px; border-radius:6px; }
+.chat-full #hdrLogo img{ width:13px; height:13px; }
+.chat-full #hdrLogo > span{ display:none; }
+.chat-full #appHeader h1{ font-size:13px; }
+#hdrExit{ display:none; }
+.chat-full #hdrExit{ display:flex; }
+#hdrDot{ display:none; width:6px; height:6px; border-radius:9999px; }
+.chat-full #hdrDot{ display:inline-block; }

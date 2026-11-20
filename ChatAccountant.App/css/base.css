@@ -1,0 +1,10 @@
+/* css/base.css — page, app frame, safe areas */
+body{ -webkit-tap-highlight-color: transparent; font-feature-settings: "cv02","cv03","cv04","cv11"; }
+.no-scrollbar::-webkit-scrollbar{ display:none; }
+.no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }
+/* 100dvh tracks the *visible* viewport on mobile (the URL bar no longer hides the bottom nav);
+   the 100vh line first is the fallback for older browsers that don't understand dvh. */
+.app-frame{ height:100vh; height:100dvh; padding-bottom: env(safe-area-inset-bottom,0px); }
+.app-min-h{ min-height:100vh; min-height:100dvh; }
+.safe-top{ padding-top: max(env(safe-area-inset-top,0px), 4px); }
+.safe-bottom{ padding-bottom: max(env(safe-area-inset-bottom,0px), 4px); }

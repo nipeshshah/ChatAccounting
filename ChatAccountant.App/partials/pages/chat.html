@@ -1,0 +1,96 @@
+<div id="chatPage" class="flex-1 min-h-0 flex flex-col">
+  <section id="summarySection" class="shrink-0 z-30 px-3 pt-2 pb-2 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-sm">
+    <div class="flex items-center justify-between mb-1.5 px-0.5">
+      <span id="summaryCaption" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Today</span>
+      <button id="summaryReport" type="button" class="text-[12px] font-semibold text-fintech-blue flex items-center gap-0.5">Reporting <i class="ph-bold ph-caret-right text-[11px]"></i></button>
+    </div>
+    <div class="grid grid-cols-3 gap-1.5">
+      <article class="bg-gradient-to-b from-emerald-50/50 to-white rounded-lg p-2 border border-emerald-200/70 shadow-fintech-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-1">
+          <span id="sumLabelA" class="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Received</span>
+          <div class="flex items-center gap-0.5 text-fintech-emerald bg-emerald-100/70 px-1 py-0.5 rounded text-[9px] font-semibold">
+            <i class="ph-bold ph-arrow-down-left text-[10px]"></i> <span id="sumBadgeA">In</span>
+          </div>
+        </div>
+        <div>
+          <div class="font-mono text-[12.5px] font-bold text-slate-900 tracking-tight" id="sumIncome">₹0.00</div>
+          <div class="w-full bg-emerald-100 h-1 rounded-full mt-1 overflow-hidden">
+            <div class="bg-fintech-emerald h-full rounded-full" id="barIncome" style="width:0%"></div>
+          </div>
+        </div>
+      </article>
+      <article class="bg-gradient-to-b from-rose-50/40 to-white rounded-lg p-2 border border-rose-200/70 shadow-fintech-sm flex flex-col justify-between">
+        <div class="flex items-center justify-between mb-1">
+          <span id="sumLabelB" class="text-[10px] font-bold tracking-wider text-slate-500 uppercase">Spent</span>
+          <div class="flex items-center gap-0.5 text-fintech-ruby bg-rose-100/70 px-1 py-0.5 rounded text-[9px] font-semibold">
+            <i class="ph-bold ph-arrow-up-right text-[10px]"></i> <span id="sumBadgeB">Out</span>
+          </div>
+        </div>
+        <div>
+          <div class="font-mono text-[12.5px] font-bold text-slate-900 tracking-tight" id="sumExpense">₹0.00</div>
+          <div class="w-full bg-rose-100 h-1 rounded-full mt-1 overflow-hidden">
+            <div class="bg-fintech-ruby h-full rounded-full" id="barExpense" style="width:0%"></div>
+          </div>
+        </div>
+      </article>
+      <article class="bg-corporate-navy rounded-lg p-2 border border-corporate-border shadow-md flex flex-col justify-between relative overflow-hidden">
+        <div class="absolute -right-3 -bottom-3 opacity-10">
+          <i class="ph-bold ph-chart-line-up text-5xl text-white"></i>
+        </div>
+        <div class="flex items-center justify-between mb-1 z-10">
+          <span id="sumLabelNet" class="text-[10px] font-bold tracking-wider text-slate-300 uppercase">Net cash</span>
+          <span id="netMarginWrap" class="flex items-center gap-0.5 text-[9px] font-bold text-emerald-300 bg-emerald-950/70 px-1 py-0.5 rounded border border-emerald-500/30">
+            <i class="ph-bold ph-trend-up text-[9px]"></i><span id="netMargin">0%</span>
+          </span>
+        </div>
+        <div class="z-10">
+          <div class="font-mono text-[12.5px] font-bold text-white tracking-tight" id="sumNet">₹0.00</div>
+          <p class="text-[9px] text-blue-200/80 font-medium mt-1 truncate" id="netLabel">Break-even</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <div id="dateBanner" class="shrink-0 px-3.5 py-1.5 bg-amber-50 border-b border-amber-200 flex items-center justify-between gap-2" style="display:none;">
+    <span class="text-[11px] font-semibold text-amber-800 flex items-center gap-1.5"><i class="ph-bold ph-calendar text-xs"></i><span id="dateBannerText"></span></span>
+    <button type="button" id="dateBannerReset" class="text-[10.5px] font-bold text-amber-700 hover:text-amber-900 underline flex-shrink-0">Reset to today</button>
+  </div>
+
+  <main id="chatLog" class="flex-1 overflow-y-auto px-3 pt-2 pb-3 flex flex-col space-y-2.5 bg-slate-50/80"></main>
+
+  <!-- Composer -->
+  <footer id="composerFooter" class="shrink-0 z-40 bg-white/95 backdrop-blur-lg border-t border-slate-200/90 shadow-2xl">
+    <div id="presetsRow" class="px-3 pt-1.5 pb-1 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-slate-100" style="display:none;">
+      <span class="text-[10px] font-mono font-bold uppercase text-slate-400 mr-1 tracking-wider flex items-center gap-0.5 flex-shrink-0">
+        <i class="ph-bold ph-lightning-fill text-amber-500"></i> Fast:
+      </span>
+      <button type="button" data-round="up" title="Round up to the next rupee" aria-label="Round up" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition"><i class="ph-bold ph-arrow-line-up text-[12px]"></i></button>
+      <button type="button" data-round="down" title="Round down to the whole rupee" aria-label="Round down" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition"><i class="ph-bold ph-arrow-line-down text-[12px]"></i></button>
+      <button type="button" data-amt="1" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹1</button>
+      <button type="button" data-amt="5" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹5</button>
+      <button type="button" data-amt="10" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹10</button>
+      <button type="button" data-amt="100" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹100</button>
+      <button type="button" data-amt="500" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹500</button>
+      <button type="button" data-amt="1000" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹1,000</button>
+      <button type="button" data-amt="5000" class="preset-btn flex-shrink-0 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-blue-50 hover:text-fintech-blue hover:border-blue-200 border border-slate-200/80 text-slate-700 font-mono text-[11px] font-semibold active:scale-95 transition">+₹5,000</button>
+    </div>
+    <div class="px-3 pt-1.5 pb-1">
+      <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-300/80 rounded-2xl p-1 shadow-inner focus-within:ring-2 focus-within:ring-fintech-blue focus-within:bg-white focus-within:border-transparent transition-all">
+        <input id="composerInput" class="flex-1 border-0 bg-transparent py-1.5 px-2 text-[13px] placeholder-slate-400 text-slate-800 font-medium focus:ring-0 focus:outline-none disabled:opacity-50" placeholder="Tap an option above ↑" disabled>
+        <button id="composerSkip" type="button" class="items-center justify-center rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 active:scale-95 transition text-xs font-semibold px-2.5 h-8" style="display:none;">Skip</button>
+        <button id="composerCancel" type="button" title="Cancel this transaction" aria-label="Cancel this transaction" class="h-8 w-8 flex items-center justify-center rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 active:scale-95 transition flex-shrink-0">
+          <i class="ph-bold ph-x text-base"></i>
+        </button>
+        <button id="composerSend" type="button" class="h-8 w-8 flex items-center justify-center rounded-lg bg-slate-200 text-slate-400 active:scale-95 transition flex-shrink-0" disabled>
+          <i class="ph-bold ph-paper-plane-right text-base"></i>
+        </button>
+      </div>
+    </div>
+    <div id="footerNoteRow" class="px-4 pb-1 text-center">
+      <p class="text-[10px] font-mono text-slate-400 tracking-tight flex items-center justify-center gap-1.5">
+        <i class="ph-bold ph-shield-check text-fintech-emerald text-xs"></i>
+        <span id="footerNote">Your data is saved to your account</span>
+      </p>
+    </div>
+  </footer>
+</div>

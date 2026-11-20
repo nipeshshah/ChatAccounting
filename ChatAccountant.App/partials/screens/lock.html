@@ -1,0 +1,13 @@
+  <div id="lockScreen" class="absolute inset-0 flex-col bg-slate-50 px-8 py-10 safe-top safe-bottom" style="display:none; z-index:90;">
+    <div class="flex-1 flex flex-col items-center justify-center text-center">
+      <div class="w-16 h-16 rounded-2xl bg-corporate-navy flex items-center justify-center shadow-md mb-5">
+        <i class="ph-bold ph-lock-key text-2xl text-white" id="lockIcon"></i>
+      </div>
+      <h2 class="text-lg font-bold text-slate-800 mb-1" id="lockTitle">Enter your PIN</h2>
+      <p class="text-[12.5px] text-slate-500 mb-6 max-w-[240px] leading-relaxed" id="lockSubtitle">Your ledger is protected on this device.</p>
+      <div id="pinDots" class="flex items-center gap-3 mb-3"></div>
+      <p class="text-[11.5px] font-semibold h-4 text-rose-600" id="pinMessage"></p>
+    </div>
+    <div id="pinKeypad" class="grid grid-cols-3 gap-3 max-w-[280px] mx-auto w-full mb-3"></div>
+    <div class="text-center" id="lockFooterLink"></div>
+  </div>

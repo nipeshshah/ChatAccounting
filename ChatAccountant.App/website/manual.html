@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User manual – Chat Accountant</title>
+<meta name="description" content="Step-by-step guide to Chat Accountant: recording sales, purchases and expenses, debtors and creditors, bills, statements, reports and settings.">
+<meta name="theme-color" content="#0B192C">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<style>
+:root{--ink:#0B192C;--blue:#2563EB;--cyan:#38BDF8;--in:#059669;--out:#DC2626;--paper:#FBFCFE;--line:#DCE3EE;--mute:#52627A;
+--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:16px}
+body{margin:0;font:17px/1.65 var(--sans);color:var(--ink);background:var(--paper)}
+a{color:var(--blue)}h1,h2,h3{font-family:var(--serif);line-height:1.2;margin:0}
+:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.top{background:var(--ink);color:#fff}.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+.top .wrap{display:flex;align-items:center;gap:16px;padding-block:14px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:#fff;text-decoration:none;margin-right:auto}
+.brand img{width:34px;height:34px;border-radius:9px}.top a.l{color:#C9D6EA;text-decoration:none;font-size:15px}
+.intro{background:var(--ink);color:#fff;padding:10px 0 46px}.intro h1{font-size:clamp(32px,5vw,48px);letter-spacing:-.02em}
+.intro p{color:#C9D6EA;font-size:19px;max-width:36em;margin:12px 0 0}
+.layout{display:grid;grid-template-columns:230px 1fr;gap:56px;padding:44px 0 70px}
+.toc{position:sticky;top:20px;align-self:start;font-size:15px}.toc b{font:700 18px var(--serif);display:block;margin-bottom:8px}
+.toc ol{margin:0;padding:0;list-style:none;border-left:2px solid var(--line)}
+.toc a{display:block;padding:5px 0 5px 14px;color:var(--mute);text-decoration:none}.toc a:hover{color:var(--blue)}
+article section{padding-bottom:42px;margin-bottom:42px;border-bottom:1px solid var(--line)}article section:last-child{border:0}
+h2{font-size:clamp(26px,3.4vw,34px);letter-spacing:-.01em;margin-bottom:14px}h3{font-size:21px;margin:26px 0 8px}
+p,li{max-width:46em}ul,ol.n{padding-left:22px}li{margin:6px 0}
+.ui{font-weight:600;background:#EAF0FA;border:1px solid #D5E0F2;border-radius:6px;padding:0 6px;white-space:nowrap}
+.tip,.warn{border-left:4px solid var(--in);background:#EEF8F3;padding:10px 16px;margin:18px 0;border-radius:0 8px 8px 0;max-width:46em}
+.warn{border-color:var(--out);background:#FDF0F0}.tip b,.warn b{display:block}
+table{border-collapse:collapse;width:100%;max-width:46em;margin:14px 0;font-size:16px}
+th,td{text-align:left;padding:9px 12px 9px 0;border-bottom:1px solid var(--line);vertical-align:top}th{border-bottom:2px solid var(--ink);font-weight:700}
+dl dt{font-weight:700;margin-top:12px}dl dd{margin:2px 0 0;color:var(--mute);max-width:46em}
+footer{padding:26px 0;font-size:14px;color:var(--mute);text-align:center;border-top:1px solid var(--line)}
+@media(max-width:860px){.layout{grid-template-columns:1fr;gap:20px}.toc{position:static}.toc ol{columns:2}.top a.l{display:none}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap"><a class="brand" href="index.html"><img src="assets/logo.png" alt="">Chat Accountant</a><a class="l" href="index.html">Home</a><a class="l" href="index.html#contact">Contact us</a></div></header>
+<div class="intro"><div class="wrap"><h1>User manual</h1><p>Everything you need to record transactions, send bills, follow up on credit and read your reports.</p></div></div>
+
+<div class="wrap layout">
+<nav class="toc" aria-label="Contents"><b>Contents</b><ol>
+<li><a href="#start">1. Getting started</a></li><li><a href="#chat">2. The chat and quick menu</a></li><li><a href="#record">3. Recording transactions</a></li>
+<li><a href="#parties">4. Debtors and creditors</a></li><li><a href="#bills">5. Bills and statements</a></li><li><a href="#reports">6. Reporting</a></li>
+<li><a href="#requests">7. Requests between businesses</a></li><li><a href="#settings">8. Settings</a></li><li><a href="#data">9. Your data and safety</a></li><li><a href="#help">10. Troubleshooting</a></li><li><a href="#terms">11. Terms used</a></li></ol></nav>
+
+<article>
+<section id="start"><h2>1. Getting started</h2>
+<ol class="n"><li>Open the app and tap <span class="ui">Continue with Google</span>.</li>
+<li>On first use a short <b>setup</b> starts. It asks whether you charge GST, then your business name, address and state (plus GSTIN and GST rates if you charge GST), and your payment accounts such as Cash and UPI. You can tap <span class="ui">Skip for now</span> and finish later in Settings.</li>
+<li>You land in the chat. Tap a button to start recording.</li></ol>
+<h3>Finding your way around</h3>
+<table><tr><th>Tab</th><th>What it is for</th></tr>
+<tr><td>Chat</td><td>Record transactions, view history, print bills, open statements.</td></tr>
+<tr><td>Manage</td><td>Debtors, creditors, categories and payment accounts.</td></tr>
+<tr><td>Reporting</td><td>Totals for today, this week, this month or a financial year.</td></tr>
+<tr><td>Requests</td><td>Transactions other businesses send you, and the ones you sent.</td></tr>
+<tr><td>Profile</td><td>Your account, mobile number verification, sign out.</td></tr>
+<tr><td>Settings</td><td>GST, print size, number format, business profile and more.</td></tr></table>
+<div class="tip"><b>Install it on your phone</b>In your browser menu choose Add to Home screen. The app then opens like any other app.</div></section>
+
+<section id="chat"><h2>2. The chat and quick menu</h2>
+<p>You never type long entries. The app asks one question at a time and shows buttons. Type only when it asks for a name, amount or date.</p>
+<h3>Quick menu</h3>
+<dl><dt>Log Income / Log Expense</dt><dd>Money that is not a sale or purchase, for example rent, fees or interest.</dd>
+<dt>Received / Paid</dt><dd>Settle what a debtor owes you, or what you owe a creditor.</dd>
+<dt>Sale / Purchase</dt><dd>Invoices, cash or credit. Sales use GST only if GST is on in Settings.</dd>
+<dt>Print Bill</dt><dd>Print or send a bill for a past sale.</dd>
+<dt>Set Date / Reset Date</dt><dd>Record transactions on another date. A banner shows the date in use. Tap Reset Date to return to today.</dd>
+<dt>Statement</dt><dd>A statement for a debtor, a creditor, or your income and expenses. It opens on <b>today</b>, with buttons to change the period, print or share.</dd>
+<dt>View</dt><dd>Balances of your debtors and creditors. The transaction list now lives in Statement &gt; Income &amp; Expense.</dd>
+<dt>Export CSV</dt><dd>Download or share your ledger as a spreadsheet file.</dd></dl>
+<h3>Top cards</h3>
+<p>The three cards show <b>today</b> only. By default they show cash received, cash spent and the net. Change what they show in Settings under Chat totals. Tap <span class="ui">Reporting</span> above them for longer periods.</p>
+<h3>Full screen</h3>
+<p>When you start a transaction the chat goes full screen. To return, open the menu and tap <span class="ui">Exit Full Screen</span>, or tap the small icon at the right of the slim header. This works even in the middle of a transaction.</p>
+<h3>Review and undo</h3>
+<ul><li>Before anything is saved you see a line such as <b>₹1,180.00 · Sale · Cash</b> with <span class="ui">Save</span> and <span class="ui">Edit</span>. Edit lets you pick the part to change, then shows the review again.</li>
+<li>After saving, a bar appears for about 7 seconds with <span class="ui">Undo</span>. It removes the entry, restores balances and withdraws a request sent to the other party, if they have not answered yet.</li>
+<li>The cancel (X) button beside the message box stops the current transaction. Nothing is saved.</li></ul></section>
+
+<section id="record"><h2>3. Recording transactions</h2>
+<h3>Log Income and Log Expense</h3>
+<ol class="n"><li>Choose <span class="ui">Cash</span> or <span class="ui">Credit</span>.</li><li>Cash: pick the payment mode. Credit: pick the debtor (income) or creditor (expense), or add a new one.</li>
+<li>Pick a category, enter the amount and an optional description, review and save.</li></ol>
+<p>Credit raises that person's balance. Settle it later with Received or Paid.</p>
+<h3>Sale</h3>
+<ol class="n"><li>Choose Credit (pick the debtor) or Cash (pick the payment mode).</li><li>Enter the amount. If GST is on, choose the rate. When only one rate is saved, it is already filled in; just tap send.</li>
+<li>Add a description, review and save. The invoice number is fixed at this point and shown in the review.</li>
+<li>Choose <span class="ui">Print bill</span>, <span class="ui">Share bill</span>, <span class="ui">WhatsApp</span> or <span class="ui">No thanks</span>.</li></ol>
+<p>With GST on, the app splits tax into CGST and SGST for the same state, or IGST for a different state, using the states saved for you and the customer.</p>
+<h3>Purchase</h3>
+<p>Purchases always allow GST. You must enter the <b>supplier's invoice number</b> and the <b>invoice date</b>. The date starts as today and can be changed. The purchase is booked on that date. If the same supplier invoice number was already entered, the review shows a warning.</p>
+<h3>Received and Paid</h3>
+<ol class="n"><li>Choose <span class="ui">From a Debtor</span> (or <span class="ui">To a Creditor</span>), then the person and the payment mode.</li>
+<li>The amount is filled in with what is due. Change it if they paid less or more.</li>
+<li>If the amount is short by up to 5%, the app asks whether the gap is a <b>discount</b>. <span class="ui">Yes, discount</span> clears the full balance and records the discount separately. <span class="ui">No, carry forward</span> leaves the gap on their balance.</li></ol>
+<div class="tip"><b>Quick amount buttons</b>Under the amount box: round up, round down, +1, +5, +10, +100 and more. They act on the number in the box.</div></section>
+
+<section id="parties"><h2>4. Debtors and creditors</h2>
+<p>A <b>debtor</b> owes you money. A <b>creditor</b> is someone you owe. Open the <span class="ui">Manage</span> tab to see them.</p>
+<ul><li><b>Add</b> a person with name, opening balance, state, address, GSTIN and mobile number (all optional except the name).</li>
+<li><b>Edit</b> or delete with the pencil and bin icons. Deleting does not change past entries.</li>
+<li><b>Statement</b> (scroll icon) opens their statement.</li>
+<li><b>Sync</b> (circular arrows) fetches their name, address, GSTIN and state if their mobile number belongs to another Chat Accountant user who shares a business profile. <span class="ui">Sync all</span> does this for the whole list.</li></ul>
+<p>The same tab holds <span class="ui">Categories</span> (income and expense) and <span class="ui">Accounts</span> (cash, UPI, bank and so on). Tap the cross on a chip to remove one.</p></section>
+
+<section id="bills"><h2>5. Bills and statements</h2>
+<h3>Choose your paper</h3>
+<p>In Settings, <span class="ui">Print size</span> offers <b>3 Inch</b> (thermal receipt printer), <b>A4</b> and <b>A5</b>. Bills and statements are laid out for the size you pick.</p>
+<h3>Print, share or WhatsApp</h3>
+<ul><li><span class="ui">Print</span> opens your printer dialog.</li><li><span class="ui">Share</span> makes a PDF and, on a phone or tablet, opens the share sheet. On a computer the PDF is saved to your Downloads folder, ready to attach to an email or WhatsApp.</li>
+<li><span class="ui">WhatsApp</span> opens the customer's chat with the bill link ready. If their number is not saved it asks for it. Tap Send inside WhatsApp. Links work for 30 days. In demo mode there is nowhere to host the file, so it uses the share sheet instead.</li></ul>
+<h3>Statements</h3>
+<p>Choose <span class="ui">Statement</span> in the quick menu, or the scroll icon on a person in Manage. In the quick menu you pick <span class="ui">Debtor</span>, <span class="ui">Creditor</span> or <span class="ui">Income &amp; Expense</span>.</p>
+<ul><li>The statement for <b>today</b> appears straight away. Buttons under it switch to This week, This month, Last month, All time or a Custom range, and offer <span class="ui">Print</span> and <span class="ui">Share</span>.</li>
+<li><b>Debtor and creditor statements</b> show the invoice number on each line, DR or CR, and the amount. The balance is shown at the end.</li>
+<li><b>Income &amp; Expense</b> lists every transaction in the period, with the date once per day, the amount in or out, and totals for in, out and net.</li></ul></section>
+
+<section id="reports"><h2>6. Reporting</h2>
+<p>Open the <span class="ui">Reporting</span> tab and pick <b>Today, This week, This month, Current FY</b> or <b>Last FY</b>. Weeks run Monday to Sunday. The financial year runs 1 April to 31 March.</p>
+<table><tr><th>Figure</th><th>Meaning</th></tr>
+<tr><td>Total sale / purchase</td><td>Invoices raised or received, cash or credit, with taxable amount and GST.</td></tr>
+<tr><td>Total income / expense</td><td>Other income and expenses, not sales or purchases.</td></tr>
+<tr><td>Money received / spent</td><td>Cash, UPI and bank only. Credit entries and discounts moved no money, so they are left out.</td></tr>
+<tr><td>By category</td><td>Money received and spent, grouped by category.</td></tr>
+<tr><td>Creditors and debtors</td><td>How many, what you owe (credit) and what is owed to you (debt), as of the end of the period.</td></tr>
+<tr><td>Per person</td><td>Sales to each debtor and purchases from each creditor in the period.</td></tr></table></section>
+
+<section id="requests"><h2>7. Requests between businesses</h2>
+<p>If a debtor or creditor has a mobile number saved, each transaction with them is sent as a <b>request</b>. If they accept, the matching entry is added to their own books. Nothing is added until they accept.</p>
+<ol class="n"><li>Verify your own number in <span class="ui">Profile</span>: enter it, tap Send code, then enter the code you receive.</li>
+<li>Save mobile numbers on your debtors and creditors.</li>
+<li>Check <span class="ui">Requests</span>. A red badge shows how many are waiting. Tap <span class="ui">Accept</span> or <span class="ui">Decline</span>.</li></ol>
+<p>A request can be answered only once. You can withdraw one with Undo if the other person has not answered.</p></section>
+
+<section id="settings"><h2>8. Settings</h2>
+<dl><dt>Business Profile</dt><dd>Name, address, state and GSTIN printed on bills. A tick box controls whether people with your verified number can fetch these details.</dd>
+<dt>Invoice Numbering</dt><dd>Use <b>[INDEX]</b> for the number, for example AMB/2025-26/[INDEX]. Set the next number to continue from your old series.</dd>
+<dt>GST on sales</dt><dd>Off means sales ask no GST questions and print as a plain invoice. Purchases can still carry GST.</dd>
+<dt>GST Rates</dt><dd>The rates offered when you pick a rate. With one rate saved, it is filled in for you.</dd>
+<dt>Chat totals</dt><dd>What the top cards show: Cash, Sale / Purchase, Income / Expense or Debt / Credit.</dd>
+<dt>Quick menu view</dt><dd>Regular shows a short description under each button. Compact shows only the icon and title.</dd>
+<dt>Print size</dt><dd>3 Inch, A4 or A5.</dd>
+<dt>Number &amp; currency</dt><dd>Indian grouping (1,23,456.00) or international (123,456.00), and the currency symbol.</dd>
+<dt>App Lock (PIN)</dt><dd>A 4-digit PIN that locks the app screen on this device. It does not encrypt your data.</dd></dl></section>
+
+<section id="data"><h2>9. Your data and safety</h2>
+<ul><li>Your records are saved to your account. Each account sees only its own data.</li><li>The file icon at the top right of the header (or Export CSV in the quick menu) downloads your ledger as a CSV. Export regularly as a backup.</li>
+<li><span class="ui">Sign out</span> is in Profile.</li></ul>
+<div class="warn"><b>Reset deletes everything</b>The circular arrow next to it in the header erases all transactions, customers and settings for your account. It cannot be undone, so export a CSV first.</div></section>
+
+<section id="help"><h2>10. Troubleshooting</h2>
+<dl><dt>The sale does not ask for GST.</dt><dd>GST on sales is switched off. Turn it on in Settings.</dd>
+<dt>Cash totals differ from what I expected.</dt><dd>The top cards show today only, and in Cash mode they leave out credit entries. Check Chat totals in Settings, or open Reporting.</dd>
+<dt>Request or sync says my number is not verified.</dt><dd>Verify your mobile number in Profile first.</dd>
+<dt>WhatsApp opens without the bill.</dt><dd>You may be in demo mode, or the upload failed. Use Share instead and choose WhatsApp there.</dd>
+<dt>The browser blocks WhatsApp from opening.</dt><dd>Tap the Open WhatsApp button that appears.</dd>
+<dt>A PDF looks wrong or empty.</dt><dd>Try again with a connection, or tap Save PDF and open the file. If it repeats, contact us with your phone and browser name.</dd>
+<dt>An email says the attachment is empty or "no_name".</dt><dd>Sharing straight from a computer into email apps can send an empty file, so on a computer the app now saves the PDF to Downloads instead. Attach that file to your email yourself.</dd>
+<dt>I saved a wrong entry.</dt><dd>Tap Undo straight away. Later, enter a correcting transaction. Past entries cannot be edited yet.</dd></dl></section>
+
+<section id="terms"><h2>11. Terms used</h2>
+<dl><dt>Debtor</dt><dd>A person or business that owes you money.</dd><dt>Creditor</dt><dd>A person or business you owe money to.</dd>
+<dt>DR / CR</dt><dd>Debit and credit. For a debtor, a sale is DR and a payment received is CR. For a creditor, a purchase is CR and a payment made is DR.</dd>
+<dt>Carry forward</dt><dd>A small unpaid amount left on the balance for next time.</dd>
+<dt>GSTIN</dt><dd>The 15-character GST registration number.</dd>
+<dt>CGST, SGST, IGST</dt><dd>Central and State GST apply within one state. IGST applies between states.</dd>
+<dt>Financial year</dt><dd>1 April to 31 March.</dd></dl>
+<p>Need more help? <a href="index.html#contact">Contact us</a>.</p></section>
+</article></div>
+<footer>© <span id="y"></span> Chat Accountant · <a href="index.html">Back to home</a></footer>
+<script>document.getElementById("y").textContent=new Date().getFullYear();</script>
+</body>
+</html>

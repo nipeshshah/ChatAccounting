@@ -1,0 +1,62 @@
+/* css/documents.css — printed / shared bills and statements.
+   .doc-thermal = 3-inch receipt (thermal printers, also fine on A4); .doc-page = A4 / A5 invoice page (.doc-a5 is the smaller scale).
+   Everything is scoped by .doc-root, which is the class of #printArea (print) and of the off-screen stage used for PDF sharing. */
+
+/* ---- 3 inch receipt ---- */
+.doc-root .doc-thermal{font-family:'JetBrains Mono','Courier New',monospace;color:#000;max-width:76mm;margin:0 auto;padding:4px 2px;font-size:11px;line-height:1.35;}
+.doc-root .doc-thermal .ctr{text-align:center;}
+.doc-root .doc-thermal .shop{font-size:14px;font-weight:700;margin:0;text-align:center;word-break:break-word;}
+.doc-root .doc-thermal .meta{font-size:10px;text-align:center;word-break:break-word;}
+.doc-root .doc-thermal .ttl{font-weight:700;text-align:center;letter-spacing:0.04em;margin-top:6px;}
+.doc-root .doc-thermal .inv{border-top:2px solid #000;border-bottom:2px solid #000;text-align:center;font-weight:700;letter-spacing:0.12em;padding:3px 0;margin:7px 0 5px;font-size:12px;}
+.doc-root .doc-thermal .lbl{font-size:9.5px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;text-align:center;}
+.doc-root .doc-thermal .sep{border-top:1px dashed #000;margin:6px 0;}
+.doc-root .doc-thermal .nm{font-weight:700;font-size:12px;text-align:center;word-break:break-word;}
+.doc-root .doc-thermal .row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:2px 0;page-break-inside:avoid;}
+.doc-root .doc-thermal .ds{flex:1;min-width:0;text-align:left;word-break:break-word;}
+.doc-root .doc-thermal .am{white-space:nowrap;text-align:right;}
+.doc-root .doc-thermal .hd{font-weight:700;border-bottom:1px dotted #000;margin-bottom:2px;}
+.doc-root .doc-thermal .dt{font-weight:700;margin-top:6px;border-bottom:1px dotted #000;page-break-after:avoid;}
+.doc-root .doc-thermal .bold{font-weight:700;}
+.doc-root .doc-thermal .close{border-top:2px solid #000;margin-top:6px;padding-top:5px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-weight:700;font-size:14px;}
+.doc-root .doc-thermal .sub{font-size:10px;text-align:center;margin-top:2px;}
+.doc-root .doc-thermal .words{font-size:10px;text-align:center;margin-top:5px;font-style:italic;word-break:break-word;}
+.doc-root .doc-thermal .thx{font-weight:700;text-align:center;margin-top:8px;}
+.doc-root .doc-thermal .foot{margin-top:6px;font-size:9px;text-align:center;}
+
+/* ---- A4 / A5 page ---- */
+.doc-root .doc-page{font-family:'Plus Jakarta Sans',Arial,sans-serif;color:#0B192C;font-size:13px;line-height:1.45;width:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.doc-root .doc-page .hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:1.5em;border-bottom:0.25em solid #0066FF;padding-bottom:0.9em;}
+.doc-root .doc-page .bn{font-size:1.7em;font-weight:800;line-height:1.2;}
+.doc-root .doc-page .bm{color:#475569;font-size:0.92em;}
+.doc-root .doc-page .rt{text-align:right;flex-shrink:0;}
+.doc-root .doc-page .dtitle{font-size:1.3em;font-weight:800;color:#0066FF;letter-spacing:0.05em;margin-bottom:0.25em;}
+.doc-root .doc-page .party{margin-top:1.3em;border:1px solid #E2E8F0;border-radius:0.7em;padding:0.8em 1.1em;background:#F8FAFC;}
+.doc-root .doc-page .pl{font-size:0.75em;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748B;margin-bottom:0.2em;}
+.doc-root .doc-page .pn{font-size:1.15em;font-weight:700;}
+.doc-root .doc-page table{width:100%;border-collapse:collapse;}
+.doc-root .doc-page table.items{margin-top:1.5em;}
+.doc-root .doc-page th{font-size:0.75em;text-transform:uppercase;letter-spacing:0.06em;color:#64748B;text-align:left;padding:0.6em 0.5em;border-bottom:2px solid #0B192C;}
+.doc-root .doc-page td{padding:0.65em 0.5em;border-bottom:1px solid #E2E8F0;vertical-align:top;}
+.doc-root .doc-page tr{page-break-inside:avoid;}
+.doc-root .doc-page .r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.doc-root .doc-page .sumwrap{display:flex;justify-content:flex-end;margin-top:0.8em;}
+.doc-root .doc-page table.sum{width:55%;}
+.doc-root .doc-page table.sum td{border-bottom:1px solid #E2E8F0;padding:0.45em 0.5em;}
+.doc-root .doc-page table.sum tr.gt td{border-top:0.2em solid #0066FF;border-bottom:none;font-weight:800;font-size:1.2em;padding-top:0.6em;}
+.doc-root .doc-page .words{margin-top:1em;font-style:italic;color:#334155;}
+.doc-root .doc-page .sign{margin-top:3.2em;text-align:right;}
+.doc-root .doc-page .sign .sl{display:inline-block;min-width:13em;border-top:1px solid #0B192C;padding-top:0.35em;margin-top:2.6em;text-align:center;font-size:0.9em;color:#475569;}
+.doc-root .doc-page .ft{margin-top:2.2em;text-align:center;color:#94A3B8;font-size:0.82em;}
+.doc-root .doc-page .strip{display:flex;gap:0.7em;margin-top:1.2em;}
+.doc-root .doc-page .sb{flex:1;border:1px solid #E2E8F0;border-radius:0.6em;padding:0.55em 0.8em;background:#F8FAFC;}
+.doc-root .doc-page .sb.dark{background:#0B192C;border-color:#0B192C;color:#fff;}
+.doc-root .doc-page .sbl{font-size:0.7em;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#64748B;}
+.doc-root .doc-page .sb.dark .sbl{color:#CBD5E1;}
+.doc-root .doc-page .sbv{font-size:1.1em;font-weight:800;font-variant-numeric:tabular-nums;}
+.doc-root .doc-page table.stm{margin-top:1.3em;}
+.doc-root .doc-page tr.dg td{background:#EEF2FF;font-weight:700;padding:0.4em 0.5em;border-bottom:none;color:#1E3A8A;}
+.doc-root .doc-page tr.tt td{font-weight:800;border-top:2px solid #0B192C;border-bottom:none;}
+.doc-root .doc-page .closeline{display:flex;justify-content:space-between;align-items:baseline;margin-top:0.8em;padding-top:0.7em;border-top:0.2em solid #0066FF;font-weight:800;font-size:1.25em;}
+.doc-root .doc-page .closenote{color:#64748B;font-size:0.8em;font-weight:500;}
+.doc-root .doc-page.doc-a5{font-size:11px;}

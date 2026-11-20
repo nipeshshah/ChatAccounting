@@ -1,0 +1,7 @@
+/* css/components.css — small reusable pieces (manage tabs, report period chips, bottom-nav tabs) */
+.manage-tab{ padding:11px 14px; border-radius:10px; font-size:13px; font-weight:600; background:#fff; border:1px solid #E2E8F0; color:#475569; }
+.manage-tab.active{ background:#0B192C; border-color:#0B192C; color:#fff; }
+.period-chip{ padding:11px 14px; border-radius:10px; font-size:13px; font-weight:600; background:#fff; border:1px solid #E2E8F0; color:#475569; white-space:nowrap; }
+.period-chip.active{ background:#0B192C; border-color:#0B192C; color:#fff; }
+.nav-tab{ color:#94A3B8; }
+.nav-tab.active{ color:#0066FF; }

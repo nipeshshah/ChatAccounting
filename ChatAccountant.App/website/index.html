@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chat Accountant – bookkeeping you do by chatting</title>
+<meta name="description" content="Record sales, purchases, expenses and credit by tapping through a chat. GST invoices, debtor and creditor statements, WhatsApp bills and reports for small Indian businesses.">
+<meta name="theme-color" content="#0B192C">
+<link rel="icon" type="image/png" href="assets/favicon.png">
+<style>
+:root{--ink:#0B192C;--ink2:#152438;--blue:#2563EB;--cyan:#38BDF8;--in:#059669;--out:#DC2626;--paper:#FBFCFE;--line:#DCE3EE;--mute:#52627A;
+--serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;font:17px/1.6 var(--sans);color:var(--ink);background:var(--paper)}
+a{color:var(--blue)}h1,h2,h3{font-family:var(--serif);line-height:1.15;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:#fff;padding:8px 12px;z-index:9}
+/* top bar + hero */
+.top{background:var(--ink);color:#fff}
+nav{display:flex;align-items:center;gap:22px;padding:14px 0}
+nav .brand{display:flex;align-items:center;gap:10px;font-weight:700;color:#fff;text-decoration:none;margin-right:auto}
+nav .brand img{width:34px;height:34px;border-radius:9px}
+nav a.l{color:#C9D6EA;text-decoration:none;font-size:15px}nav a.l:hover{color:#fff}
+.btn{display:inline-block;background:var(--blue);color:#fff;text-decoration:none;font-weight:600;padding:12px 20px;border-radius:10px;border:0;font:600 16px var(--sans);cursor:pointer}
+.btn:hover{background:#1D4ED8}.btn.ghost{background:transparent;border:1px solid #3a5278;color:#fff}
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:center;padding:56px 0 72px}
+.hero h1{font-size:clamp(34px,5.2vw,56px);letter-spacing:-.02em}
+.hero p{color:#C9D6EA;font-size:19px;max-width:34em;margin:18px 0 28px}
+.hero .cta{display:flex;gap:12px;flex-wrap:wrap}
+.hero small{display:block;margin-top:16px;color:#8FA3C2;font-size:14px}
+/* chat demo */
+.phone{background:#F1F5FA;border-radius:22px;padding:14px;max-width:380px;margin-left:auto;box-shadow:0 30px 60px -20px rgba(0,0,0,.6);color:var(--ink)}
+.bar{display:flex;justify-content:space-between;font-size:13px;font-weight:600;color:var(--mute);padding:2px 6px 10px}
+.bar b{color:var(--in)}.bar i{font-style:normal;color:var(--out)}
+.msg{background:#fff;border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:10px 12px;font-size:15px;margin:0 28px 8px 0}
+.me{background:var(--ink);color:#fff;border-radius:16px 4px 16px 16px;margin:0 0 8px 70px;padding:8px 12px;font-size:15px;text-align:right}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chips span{border:1px solid var(--line);background:#F7FAFE;border-radius:9px;padding:6px 11px;font-size:14px;font-weight:600}
+.chips .go{background:var(--in);border-color:var(--in);color:#fff}
+.msg strong{display:block;font-size:19px}.msg em{font-style:normal;color:var(--mute);font-size:13.5px}
+/* sections */
+section{padding:76px 0}section.alt{background:#fff;border-block:1px solid var(--line)}
+h2{font-size:clamp(28px,3.6vw,40px);letter-spacing:-.015em;max-width:20em}
+.lead{color:var(--mute);max-width:42em;margin:14px 0 0;font-size:18px}
+.pain{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:40px;border-top:2px solid var(--ink)}
+.pain div{padding:22px 24px 0 0}.pain div+div{padding-left:24px;border-left:1px solid var(--line)}
+.pain h3{font-size:22px;margin-bottom:8px}.pain p{margin:0;color:var(--mute);font-size:16px}
+.steps{list-style:none;counter-reset:s;display:grid;grid-template-columns:repeat(4,1fr);gap:22px;padding:0;margin:40px 0 0}
+.steps li{counter-increment:s;border-top:3px solid var(--blue);padding-top:14px;font-size:16px}
+.steps li::before{content:counter(s);display:block;font:700 30px var(--serif);color:var(--blue)}
+.steps b{display:block;font-size:18px;margin-bottom:4px}.steps span{color:var(--mute)}
+.who{margin-top:34px;border-top:1px solid var(--line)}
+.who div{display:grid;grid-template-columns:230px 1fr;gap:24px;padding:18px 0;border-bottom:1px solid var(--line)}
+.who dt{font:700 20px var(--serif)}.who dd{margin:0;color:var(--mute)}.who dd b{color:var(--ink);font-weight:600}
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:6px 56px;margin-top:34px}
+.feat div{padding:16px 0;border-bottom:1px solid var(--line)}
+.feat h3{font-size:20px;margin-bottom:4px}.feat p{margin:0;color:var(--mute);font-size:16px}
+.road{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;margin-top:36px}
+.road>div{border-top:4px solid var(--line);padding-top:14px}
+.road .now{border-color:var(--in)}.road .next{border-color:var(--blue)}.road .later{border-color:#8FA3C2}
+.road h3{font-size:22px}.road small{color:var(--mute);display:block;margin:2px 0 12px;font-size:14px}
+.road ul{margin:0;padding-left:18px}.road li{margin:6px 0;font-size:16px}
+.note{margin-top:26px;color:var(--mute);font-size:15px}
+/* contact */
+.contact{background:var(--ink);color:#fff}.contact .lead{color:#C9D6EA}
+.cgrid{display:grid;grid-template-columns:.9fr 1.1fr;gap:48px;margin-top:30px}
+.ways a{color:#fff;font-size:20px;font-weight:600;text-decoration:none;display:block;margin:4px 0 0}
+.ways p{margin:20px 0 0;color:#8FA3C2;font-size:15px}
+form{display:grid;gap:12px}label{font-size:14px;color:#C9D6EA;display:grid;gap:5px}
+input,textarea,select{font:16px var(--sans);padding:12px;border-radius:9px;border:1px solid #3a5278;background:var(--ink2);color:#fff;width:100%}
+textarea{min-height:120px;resize:vertical}
+footer{padding:26px 0;font-size:14px;color:var(--mute);text-align:center}
+@media(max-width:860px){.hero,.cgrid,.feat{grid-template-columns:1fr}.phone{margin:0 auto}.pain,.steps,.road{grid-template-columns:1fr}
+.pain div+div{padding-left:0;border-left:0}.who div{grid-template-columns:1fr;gap:4px}nav a.l{display:none}.hero{padding:36px 0 52px}section{padding:56px 0}}
+@media(prefers-reduced-motion:no-preference){.phone{animation:rise .7s ease both}@keyframes rise{from{opacity:0;transform:translateY(16px)}}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="top"><div class="wrap">
+  <nav aria-label="Main">
+    <a class="brand" href="#"><img src="assets/logo.png" alt="">Chat Accountant</a>
+    <a class="l" href="#who">Who it's for</a><a class="l" href="#features">Features</a><a class="l" href="#roadmap">Roadmap</a><a class="l" href="manual.html">User manual</a>
+    <a class="btn" href="#contact">Contact us</a>
+  </nav>
+  <div class="hero">
+    <div>
+      <h1>Do your books by answering a few taps.</h1>
+      <p>Chat Accountant turns bookkeeping into a conversation. Record a sale, a purchase or an expense, send the bill on WhatsApp, and always know who owes you and whom you owe.</p>
+      <div class="cta"><a class="btn" href="#contact">Get a demo</a><a class="btn ghost" href="#features">See what it does</a></div>
+      <small>Built for Indian small businesses: ₹, GST, UPI, credit and cash. New here? <a href="manual.html" style="color:#8FC2FF">Read the user manual</a>.</small>
+    </div>
+    <div class="phone" role="img" aria-label="Example chat: a credit sale of ₹1,180 to Acme, reviewed and saved">
+      <div class="bar"><span>Today</span><span><b>₹4,590</b> received &nbsp; <i>₹860</i> spent</span></div>
+      <div class="msg">Credit sale or cash sale?</div>
+      <div class="me">Credit</div>
+      <div class="msg">Sale amount?<div class="chips"><span>18%</span><span>5%</span><span>0%</span></div></div>
+      <div class="me">₹1,000 · 18%</div>
+      <div class="msg"><em>Review</em><strong>₹1,180.00 · Sale · Acme</strong><em>Taxable ₹1,000 · CGST ₹90 · SGST ₹90</em>
+        <div class="chips"><span class="go">Save</span><span>Edit</span></div></div>
+    </div>
+  </div>
+</div></header>
+
+<main id="main">
+<section><div class="wrap">
+  <h2>Bookkeeping fails when it feels like a chore.</h2>
+  <p class="lead">Notebooks get lost, spreadsheets get skipped, and full accounting software was built for accountants. Chat Accountant is built for the person actually running the counter.</p>
+  <div class="pain">
+    <div><h3>Credit gets forgotten</h3><p>Every credit sale and purchase updates the debtor or creditor automatically, and a statement is one tap away.</p></div>
+    <div><h3>Bills take too long</h3><p>Invoices print on a 3-inch receipt roll or A4, or go straight to the customer's WhatsApp.</p></div>
+    <div><h3>Mistakes pile up</h3><p>Every entry is reviewed before saving and can be undone for a few seconds afterwards.</p></div>
+  </div>
+</div></section>
+
+<section class="alt"><div class="wrap">
+  <h2>From tap to bill in four steps.</h2>
+  <ol class="steps">
+    <li><b>Choose</b><span>Income, expense, sale, purchase, received or paid.</span></li>
+    <li><b>Answer</b><span>Cash or credit, amount, GST rate. Prefilled where it can be.</span></li>
+    <li><b>Review</b><span>One line shows what will be saved. Edit anything, or save.</span></li>
+    <li><b>Send</b><span>Print the invoice or send it on WhatsApp. Undo is a tap away.</span></li>
+  </ol>
+</div></section>
+
+<section id="who"><div class="wrap">
+  <h2>Who can use it, and for what.</h2>
+  <p class="lead">Anyone who sells, buys or spends money and wants a clear picture without learning accounting software.</p>
+  <dl class="who">
+    <div><dt>Shopkeepers and traders</dt><dd>Cash and UPI sales through the day, <b>credit to regular customers</b>, supplier purchases with GST, and a daily cash view.</dd></div>
+    <div><dt>Wholesalers and distributors</dt><dd><b>Debtor and creditor ledgers</b>, cash discounts on part payment, statements for customers who dispute balances.</dd></div>
+    <div><dt>Freelancers and consultants</dt><dd>Invoice clients, track who has paid, log expenses, and see <b>this month and this financial year</b> at a glance.</dd></div>
+    <div><dt>Service businesses</dt><dd>Salons, clinics, repair shops and coaching classes: quick receipts, bills on a thermal printer, and monthly expense tracking.</dd></div>
+    <div><dt>Contractors and small manufacturers</dt><dd>Purchases against supplier invoices, <b>money owed by clients</b>, and GST-ready sales and purchase totals.</dd></div>
+    <div><dt>Home and online sellers</dt><dd>Orders taken on WhatsApp or Instagram: record the sale, <b>send the bill back in the same chat</b>.</dd></div>
+    <div><dt>Bookkeepers and accountants</dt><dd>Help small clients keep clean books, export CSV, and use statements and reports during reviews.</dd></div>
+  </dl>
+</div></section>
+
+<section class="alt" id="features"><div class="wrap">
+  <h2>What it does today.</h2>
+  <div class="feat">
+    <div><h3>Chat-style entry</h3><p>Sales, purchases, income, expenses, receipts and payments, each in a few taps, cash or credit.</p></div>
+    <div><h3>GST when you need it</h3><p>Switch GST on for sales or leave it off. CGST + SGST or IGST is worked out from the states. Purchases can always carry GST.</p></div>
+    <div><h3>Debtors and creditors</h3><p>Balances update on every credit entry. Part payments within 5% can be booked as a cash discount.</p></div>
+    <div><h3>Statements</h3><p>Debtor and creditor statements by period, with invoice numbers, printable or shareable as PDF.</p></div>
+    <div><h3>Bills your way</h3><p>3-inch thermal, A4 or A5 layouts. Sale invoices are numbered in your own format, with the amount in words.</p></div>
+    <div><h3>WhatsApp and PDF sharing</h3><p>Send the bill exactly as generated, straight to the customer's chat.</p></div>
+    <div><h3>Reporting</h3><p>Today, this week, this month or a financial year: sales, purchases, income, expenses, money received and spent, by category.</p></div>
+    <div><h3>Review and undo</h3><p>Check each entry before it is saved and undo it afterwards, including the request sent to the other party.</p></div>
+    <div><h3>Requests between businesses</h3><p>Send a transaction to a customer or supplier's verified mobile number. If they accept, it lands in their books too.</p></div>
+    <div><h3>Made for phones</h3><p>Large tap targets, Indian number format (₹1,23,456.00), full-screen chat and a quick setup wizard.</p></div>
+    <div><h3>Your data, protected</h3><p>Each account sees only its own records, with an optional PIN lock and CSV export any time.</p></div>
+    <div><h3>Flexible views</h3><p>Choose what the chat totals show: cash, sales and purchases, income and expense, or debt and credit.</p></div>
+  </div>
+</div></section>
+
+<section id="roadmap"><div class="wrap">
+  <h2>Where it is going.</h2>
+  <p class="lead">Priorities follow what users ask for. The order below can change.</p>
+  <div class="road">
+    <div class="now"><h3>Available now</h3><small>Shipped</small><ul><li>Chat entry with review and undo</li><li>GST sales and purchases</li><li>Statements and reports</li><li>Print and WhatsApp bills</li><li>Requests between businesses</li></ul></div>
+    <div class="next"><h3>Next</h3><small>Being planned</small><ul><li>Hindi, Gujarati and Marathi</li><li>Edit and delete with a change history</li><li>GST summary and return-ready exports</li><li>Profit and loss report</li><li>Payment reminders on WhatsApp</li></ul></div>
+    <div class="later"><h3>Later</h3><small>Exploring</small><ul><li>Bank statement import</li><li>Stock and inventory</li><li>Staff logins with roles</li><li>Share access with your accountant</li><li>Automatic WhatsApp sending</li></ul></div>
+  </div>
+  <p class="note">Missing something? Tell us below. Real requests decide what moves up. Learning the app? See the <a href="manual.html">user manual</a>.</p>
+</div></section>
+
+<section class="contact" id="contact"><div class="wrap">
+  <h2>Talk to us.</h2>
+  <p class="lead">Want a walkthrough for your business, help getting started, or a feature we should build? Write to us.</p>
+  <div class="cgrid">
+    <div class="ways">
+      <span>Email</span><a id="mailLink" href="#">hello@example.com</a>
+      <p>WhatsApp</p><a id="waLink" href="#">+91 99999 99999</a>
+      <p>We usually reply within one working day.</p>
+    </div>
+    <form id="f">
+      <label>Your name<input name="name" autocomplete="name" required></label>
+      <label>Phone or email<input name="reach" autocomplete="email" required></label>
+      <label>I run a<select name="biz"><option>Shop or trading business</option><option>Service business</option><option>Freelance or consulting</option><option>Accounting practice</option><option>Something else</option></select></label>
+      <label>How can we help?<textarea name="msg" required></textarea></label>
+      <button class="btn" type="submit">Send message</button>
+    </form>
+  </div>
+</div></section>
+</main>
+<footer>© <span id="y"></span> Chat Accountant. Made for small businesses in India. · <a href="manual.html">User manual</a></footer>
+
+<script>
+/* Replace these with your real contact details */
+var CONTACT={email:"hello@example.com",whatsapp:"919999999999",whatsappLabel:"+91 99999 99999"};
+document.getElementById("y").textContent=new Date().getFullYear();
+var m=document.getElementById("mailLink");m.href="mailto:"+CONTACT.email;m.textContent=CONTACT.email;
+var w=document.getElementById("waLink");w.href="https://wa.me/"+CONTACT.whatsapp;w.textContent=CONTACT.whatsappLabel;
+document.getElementById("f").addEventListener("submit",function(e){
+  e.preventDefault();var d=new FormData(e.target);
+  var body="Name: "+d.get("name")+"\nContact: "+d.get("reach")+"\nBusiness: "+d.get("biz")+"\n\n"+d.get("msg");
+  location.href="mailto:"+CONTACT.email+"?subject="+encodeURIComponent("Chat Accountant enquiry")+"&body="+encodeURIComponent(body);
+});
+</script>
+</body>
+</html>
