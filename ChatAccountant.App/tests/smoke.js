@@ -282,7 +282,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
     // ---- WhatsApp: the generated bill goes to the customer's chat, no share sheet ----
     // (jsdom can't draw a canvas, and there is no real storage or WhatsApp here — those three are stubbed)
-    w.eval("getDocPdf = async function(doc){ doc.blob = new Blob(['%PDF-1.4'], { type: 'application/pdf' }); return doc.blob; }");
+    w.eval("window.__pdfCalls = 0; getDocPdf = async function(doc){ window.__pdfCalls++; doc.blob = new Blob(['%PDF-1.4 ' + 'x'.repeat(1000)], { type: 'application/pdf' }); return doc.blob; }");
     const opened = []; w.open = (u) => { opened.push(u); return {}; };
     const uploads = []; w.Panel.supportsFiles = true;
     w.Panel.files = { uploadBill: async (blob, name) => { uploads.push({ name, size: blob.size }); return { url: "https://files.example/signed/" + name + "?token=abc", days: 30 }; } };
@@ -355,6 +355,34 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     check("skipping the number lets you pick the contact inside WhatsApp", opened[n0 + 1].startsWith("https://wa.me/?text="));
     await tap("Done");
     check("whatsapp message builder is tidy (no double blank lines)", !/\n\n\n/.test(g("whatsappMessage({meta:{customer:'A',billNo:'B',business:'C',gst:false,amount:'₹1',date:'d'}}, 'http://x', 0)")));
+
+    // ---- phone sharing: prepared early, real errors shown, Save / Open PDF fallbacks ----
+    w.eval("isMobileDevice = () => true");
+    const dWarm = { mode: "thermal", html: "<div></div>", filename: "w.pdf", title: "w" };
+    const pc0 = w.__pdfCalls; w.eval("window.__d = " + JSON.stringify(dWarm) + "; warmPdf(window.__d);"); const warmed = await w.__d.warming;
+    check("on a phone the PDF is prepared in the background (warmPdf)", w.__pdfCalls === pc0 + 1 && warmed && warmed.size > 800);
+    w.eval("isMobileDevice = () => false; window.__d2 = { mode: 'thermal', html: '', filename: 'x.pdf', title: 'x' }; warmPdf(window.__d2);");
+    check("…and not on a computer (nothing to warm)", w.__d2.warming === undefined);
+    w.eval("isMobileDevice = () => true; window.__calls = 0; window.__saved2 = []; sharePdfBlob = async function(){ window.__calls++; lastShareError = { name: 'NotAllowedError', message: 'Permission denied' }; return 'blocked'; }; downloadBlob = function(b, n){ window.__saved2.push(n); };");
+    w.URL.createObjectURL = () => "blob:test-pdf"; w.URL.revokeObjectURL = () => {};
+    const o0 = opened.length;
+    await tap("Print Bill"); await tap("₹2,360.00"); await tap("Share");
+    await waitFor(() => btn("Share file"), "share menu");
+    check("PDF was ready, so the share sheet is tried inside the tap (no 'Preparing' step)", w.__calls === 1 && !/Preparing the PDF/.test(chatText().slice(chatText().lastIndexOf("Print or share the bill?"))));
+    check("refused once: menu offers Share file / Save PDF / Open PDF / Skip", !!btn("Share file") && !!btn("Save PDF") && !!btn("Open PDF") && !!btn("Skip") && /Tap Share file/.test(chatText()));
+    await tap("Share file");
+    await waitFor(() => btn("Try again"), "second failure menu");
+    check("second failure shows the real reason and a way out", w.__calls === 2 && /NotAllowedError: Permission denied/.test(chatText()) && /Chrome or Safari/.test(chatText()) && !!btn("Save PDF") && !!btn("Open PDF"));
+    await tap("Save PDF");
+    await waitFor(() => /PDF saved to this device/.test(chatText()), "saved");
+    check("Save PDF downloads the file and says so", w.__saved2.length === 1 && /^Invoice-/.test(w.__saved2[0]));
+    await tap("Done");
+    await tap("Print Bill"); await tap("₹2,360.00"); await tap("Share"); await waitFor(() => btn("Open PDF"), "menu again");
+    await tap("Open PDF");
+    await waitFor(() => opened.length === o0 + 1 && /use the viewer's share/.test(chatText()), "pdf opened");
+    check("Open PDF opens the file in the browser's viewer", opened[o0] === "blob:test-pdf" && /use the viewer's share/.test(chatText()));
+    await tap("Done");
+    w.eval("sharePdfBlob = window.__origShare; isMobileDevice = () => false");
 
     check("no script errors, no failed resources", errors.length === 0 && failedResources.length === 0, errors.concat(failedResources).join(" | "));
   } catch (e) {

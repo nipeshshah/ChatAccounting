@@ -107,10 +107,15 @@ function downloadBlob(blob, filename){
   setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
 }
 
-// "shared" | "cancelled" | "blocked" (browser wants a fresh tap) | "downloaded" (no file sharing here)
+// Why the last share attempt failed — shown to the user instead of failing silently
+let lastShareError = null;
+function shareErrorText(){ const e = lastShareError; return e ? (e.name || "Error") + (e.message ? ": " + e.message : "") : ""; }
+
+// "shared" | "cancelled" | "blocked" (the browser refused: no fresh tap, or no share sheet) | "downloaded" (no file sharing here)
 async function sharePdfBlob(blob, filename, title){
   if(!blob || !blob.size) throw new Error("the PDF is empty");
   const file = new File([blob], filename || "document.pdf", { type: "application/pdf", lastModified: Date.now() });
+  lastShareError = null;
   // The share sheet is only used on phones and tablets. On a computer (Windows especially) email apps such as Outlook
   // receive the shared file as an EMPTY attachment called "no_name", so there the PDF is saved for you to attach.
   if(isMobileDevice() && navigator.canShare && navigator.canShare({ files: [file] })){
@@ -119,34 +124,60 @@ async function sharePdfBlob(blob, filename, title){
     for(let i = 0; i < attempts.length; i++){
       try{ await navigator.share(attempts[i]); return "shared"; }
       catch(e){
+        if(!lastShareError) lastShareError = e;                       // keep the FIRST reason
         if(e && e.name === "AbortError") return "cancelled";
         if(e && e.name === "NotAllowedError") return "blocked";
       }
     }
+    return "blocked";
   }
   downloadBlob(blob, filename || "document.pdf");
   return "downloaded";
 }
 
+// A phone only opens the share sheet straight after a tap, and drawing the PDF takes a moment. So on phones the PDF is
+// prepared in the background while the bill / statement is on screen, and Share can then open the sheet inside the tap.
+function warmPdf(doc){
+  if(!isMobileDevice() || doc.warming) return doc;
+  doc.warming = getDocPdf(doc).catch(function(){ return null; });      // problems are reported when the user taps Share
+  return doc;
+}
+function openPdf(blob){
+  const url = URL.createObjectURL(blob);
+  if(!window.open(url, "_blank")) window.location.href = url;
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 120000);
+}
+
 // Chat: share a document
 async function shareFlow(doc){
-  await botSay("Preparing the PDF…", { icon: "ph-file-pdf" });
-  let blob;
-  try{ blob = await getDocPdf(doc); }
-  catch(e){ await botSay("Couldn't prepare the PDF — " + (e && e.message ? e.message : "unknown error") + ".", { icon: "ph-warning" }); return; }
-  let r = await sharePdfBlob(blob, doc.filename, doc.title);
-  if(r === "blocked"){
-    await botSay("PDF ready (" + Math.max(1, Math.round(blob.size / 1024)) + " KB). Tap below to open the share sheet, or save the file.", { icon: "ph-share-network" });
-    const go = await askQuickReply([
-      { label: "Share file", value: "go", icon: "ph-share-network" },
+  let blob = doc.blob && doc.blob.size > 800 ? doc.blob : null;
+  if(!blob && doc.warming) blob = await doc.warming;                   // being prepared right now
+  if(!blob){
+    await botSay("Preparing the PDF…", { icon: "ph-file-pdf" });
+    try{ blob = await getDocPdf(doc); }
+    catch(e){ await botSay("Couldn't prepare the PDF — " + (e && e.message ? e.message : "unknown error") + ".", { icon: "ph-warning" }); return; }
+  }
+  const kb = Math.max(1, Math.round(blob.size / 1024));
+  let r = await sharePdfBlob(blob, doc.filename, doc.title), tries = 1;
+  while(r === "blocked"){
+    const why = shareErrorText();
+    await botSay(tries === 1
+      ? "PDF ready (" + kb + " KB). Tap Share file to open the share sheet."
+      : "The share sheet didn't open" + (why ? " (" + why + ")" : "") + ". Save or open the PDF and share it from there. If you opened this app from inside another app (WhatsApp, Instagram …), open it in Chrome or Safari instead.", { icon: "ph-share-network" });
+    const act = await askQuickReply([
+      { label: tries === 1 ? "Share file" : "Try again", value: "go", icon: "ph-share-network" },
       { label: "Save PDF", value: "save", icon: "ph-download" },
+      { label: "Open PDF", value: "open", icon: "ph-file-pdf" },
       { label: "Skip", value: "skip", icon: "ph-x" }
     ]);
-    if(go === "save"){ downloadBlob(blob, doc.filename); await botSay("PDF saved to this device.", { icon: "ph-check-circle" }); return; }
-    if(go !== "go") return;
-    r = await sharePdfBlob(blob, doc.filename, doc.title);
+    if(act === "save"){ downloadBlob(blob, doc.filename); await botSay("PDF saved to this device (Downloads).", { icon: "ph-check-circle" }); return; }
+    if(act === "open"){ openPdf(blob); await botSay("Opened the PDF — use the viewer's share or download button.", { icon: "ph-check-circle" }); return; }
+    if(act !== "go") return;
+    r = await sharePdfBlob(blob, doc.filename, doc.title);             // straight after the tap, so the browser allows it
+    tries++;
   }
   if(r === "shared") await botSay("Shared.", { icon: "ph-check-circle" });
+  else if(r === "cancelled") await botSay("Share cancelled.", { icon: "ph-info" });
   else if(r === "downloaded") await botSay(isMobileDevice()
     ? "This browser can't share files, so the PDF was saved to this device instead."
     : "The PDF was saved to your Downloads folder. Attach it from there — sharing straight from a computer into email often arrives as an empty file.", { icon: "ph-download" });

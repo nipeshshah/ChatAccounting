@@ -137,7 +137,7 @@ async function statementViewer(make){
   let period = statementPeriod("today"), view = null;
   while(true){
     let card = null;
-    if(!view){ view = make(period); card = newBotCard("ph-scroll"); card.innerHTML = view.html; }
+    if(!view){ view = make(period); warmPdf(view.doc); card = newBotCard("ph-scroll"); card.innerHTML = view.html; }
     else await botSay("Anything else with this statement?", { icon: "ph-scroll" });
     const opts = [{ label: "Print", value: "print", icon: "ph-printer" }, { label: "Share", value: "share", icon: "ph-share-network" }];
     STATEMENT_PERIODS.forEach(function(p){ if(p[0] !== period.key) opts.push({ label: p[1], value: "p:" + p[0], icon: "ph-calendar" }); });
@@ -202,16 +202,27 @@ function openStatementView(list, index, roleLabel){
       + '<div class="bg-white border border-slate-200 rounded-xl p-3 shadow-fintech-sm">' + statementHtml(st) + '</div>';
     el.querySelector("#stmtBack").onclick = function(){ renderManageSection(); };
     const doc = buildStatementDoc(st);
+    warmPdf(doc);
     el.querySelector("#stmtPrint").onclick = function(){ printDocument(doc); };
     el.querySelector("#stmtShare").onclick = async function(){
       const btn = this, label = btn.querySelector("span"), msg = el.querySelector("#stmtMsg");
-      btn.disabled = true; label.textContent = "Preparing…"; msg.textContent = "";
-      let blob;
-      try{ blob = await getDocPdf(doc); }
-      catch(e){ msg.textContent = "Couldn't prepare the PDF — " + (e && e.message ? e.message : "unknown error") + "."; btn.disabled = false; label.textContent = "Share"; return; }
+      let blob = doc.blob && doc.blob.size > 800 ? doc.blob : null;
+      if(!blob && doc.warming) blob = await doc.warming;
+      if(!blob){
+        btn.disabled = true; label.textContent = "Preparing…"; msg.textContent = "";
+        try{ blob = await getDocPdf(doc); }
+        catch(e){ msg.textContent = "Couldn't prepare the PDF — " + (e && e.message ? e.message : "unknown error") + "."; btn.disabled = false; label.textContent = "Share"; return; }
+        btn.disabled = false;
+      }
       const r = await sharePdfBlob(blob, doc.filename, doc.title);
-      btn.disabled = false;
-      if(r === "blocked"){ label.textContent = "Tap to share"; msg.textContent = "PDF ready — tap again to open the share sheet."; return; }
+      if(r === "blocked"){
+        if(label.textContent === "Tap to share"){        // a fresh tap didn't help either: save it so it can still be sent
+          downloadBlob(blob, doc.filename); label.textContent = "Share";
+          msg.textContent = "The share sheet didn't open" + (shareErrorText() ? " (" + shareErrorText() + ")" : "") + ", so the PDF was saved to your Downloads.";
+          return;
+        }
+        label.textContent = "Tap to share"; msg.textContent = "PDF ready — tap again to open the share sheet."; return;
+      }
       label.textContent = "Share";
       msg.textContent = r === "shared" ? "Shared." : r === "downloaded" ? (isMobileDevice() ? "This browser can't share files, so the PDF was saved." : "The PDF was saved to your Downloads folder — attach it from there.") : "";
     };

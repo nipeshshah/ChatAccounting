@@ -115,10 +115,16 @@ function buildBillDoc(entry, kind, shop, party){
     doc.meta = { customer: party.name, billNo: billNo, business: shop.name || "us", gst: entry.taxableAmount !== undefined,
                  amount: data.currency + fmt(entry.amount), date: shortDate(entry.date), partyRef: data.debtors.indexOf(party) >= 0 ? party : null };
   }
+  warmPdf(doc);
   return doc;
 }
 
 async function offerBill(entry, kind, party){
+  // When nothing more has to be asked, the bill is prepared while the buttons are on screen, so Share works on the first tap
+  let doc = null;
+  if(data.shop && data.shop.name && (!party || party.gstNumber !== undefined)){
+    doc = buildBillDoc(entry, kind, data.shop, party || { name: "Walk-in Customer" });
+  }
   const choice = await askQuickReply([
     { label: "Print bill", value: "print", icon: "ph-printer" },
     { label: "Share bill", value: "share", icon: "ph-share-network" },
@@ -126,10 +132,13 @@ async function offerBill(entry, kind, party){
     { label: "No thanks", value: "no", icon: "ph-x" }
   ]);
   if(choice === "no") return;
-  const shop = await getShopDetails();
-  if(party) await ensurePartyDetails(party, kind);
-  else party = { name: "Walk-in Customer" };
-  await outputDocument(buildBillDoc(entry, kind, shop, party), choice, "bill");
+  if(!doc){
+    const shop = await getShopDetails();
+    if(party) await ensurePartyDetails(party, kind);
+    else party = { name: "Walk-in Customer" };
+    doc = buildBillDoc(entry, kind, shop, party);
+  }
+  await outputDocument(doc, choice, "bill");
 }
 
 async function printBillFlow(){
